@@ -23,6 +23,8 @@ from .const import (
     ATTR_NEXT_ARRIVAL,
     ATTR_NEXT_DEPARTURE,
     ATTR_VACATION_NAME,
+    CONF_CHILD_NAME,
+    CONF_CHILD_NAME_DISPLAY,
     CONF_PHOTO,
     DOMAIN,
 )
@@ -56,7 +58,7 @@ SENSORS: tuple[SensorDefinition, ...] = (
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     """Set up Custody Schedule sensors."""
     coordinator: CustodyScheduleCoordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
-    child_name = entry.data.get("child_name")
+    child_name = entry.data.get(CONF_CHILD_NAME_DISPLAY, entry.data.get(CONF_CHILD_NAME))
 
     entities = [CustodyScheduleSensor(coordinator, entry, definition, child_name) for definition in SENSORS]
     async_add_entities(entities)

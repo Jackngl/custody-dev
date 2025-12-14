@@ -14,14 +14,14 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
 from . import CustodyScheduleCoordinator
-from .const import CONF_LOCATION, CONF_PHOTO, DOMAIN
+from .const import CONF_CHILD_NAME, CONF_CHILD_NAME_DISPLAY, CONF_LOCATION, CONF_PHOTO, DOMAIN
 from .schedule import CustodyComputation, CustodyWindow
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     """Set up the calendar entity."""
     coordinator: CustodyScheduleCoordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
-    child_name = entry.data.get("child_name")
+    child_name = entry.data.get(CONF_CHILD_NAME_DISPLAY, entry.data.get(CONF_CHILD_NAME))
     async_add_entities([CustodyCalendarEntity(coordinator, entry, child_name)])
 
 

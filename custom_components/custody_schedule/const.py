@@ -23,6 +23,7 @@ HOLIDAY_API = (
 )
 
 CONF_CHILD_NAME = "child_name"
+CONF_CHILD_NAME_DISPLAY = "child_name_display"
 CONF_ICON = "icon"
 CONF_PHOTO = "photo"
 CONF_CUSTODY_TYPE = "custody_type"

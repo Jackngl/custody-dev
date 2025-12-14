@@ -16,6 +16,8 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from homeassistant.util import dt as dt_util
 
 from .const import (
+    CONF_CHILD_NAME,
+    CONF_CHILD_NAME_DISPLAY,
     DOMAIN,
     LOGGER,
     PLATFORMS,
@@ -100,13 +102,14 @@ class CustodyScheduleCoordinator(DataUpdateCoordinator[CustodyComputation]):
             return
 
         last = self._last_state
+        child_label = self.entry.data.get(CONF_CHILD_NAME_DISPLAY, self.entry.data.get(CONF_CHILD_NAME))
         if last.is_present != new_state.is_present:
             event = "custody_arrival" if new_state.is_present else "custody_departure"
             self.hass.bus.async_fire(
                 event,
                 {
                     "entry_id": self.entry.entry_id,
-                    "child": self.entry.data.get("child_name"),
+                    "child": child_label,
                     "next_departure": new_state.next_departure.isoformat() if new_state.next_departure else None,
                     "next_arrival": new_state.next_arrival.isoformat() if new_state.next_arrival else None,
                 },

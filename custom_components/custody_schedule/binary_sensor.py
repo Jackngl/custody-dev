@@ -18,6 +18,8 @@ from .const import (
     ATTR_NEXT_ARRIVAL,
     ATTR_NEXT_DEPARTURE,
     ATTR_VACATION_NAME,
+    CONF_CHILD_NAME,
+    CONF_CHILD_NAME_DISPLAY,
     CONF_PHOTO,
     DOMAIN,
 )
@@ -26,7 +28,7 @@ from .const import (
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     """Set up the binary sensor."""
     coordinator: CustodyScheduleCoordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
-    child_name = entry.data.get("child_name")
+    child_name = entry.data.get(CONF_CHILD_NAME_DISPLAY, entry.data.get(CONF_CHILD_NAME))
     async_add_entities([CustodyPresenceBinarySensor(coordinator, entry, child_name)])
 
 
@@ -64,7 +66,7 @@ class CustodyPresenceBinarySensor(CoordinatorEntity[CustodyComputation], BinaryS
             return {}
 
         return {
-            "child_name": self._entry.data.get("child_name"),
+            "child_name": self._entry.data.get(CONF_CHILD_NAME_DISPLAY, self._entry.data.get(CONF_CHILD_NAME)),
             ATTR_CUSTODY_TYPE: self._entry.data.get("custody_type"),
             ATTR_NEXT_ARRIVAL: data.next_arrival.isoformat() if data.next_arrival else None,
             ATTR_NEXT_DEPARTURE: data.next_departure.isoformat() if data.next_departure else None,

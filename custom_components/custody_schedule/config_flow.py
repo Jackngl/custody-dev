@@ -10,13 +10,14 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
-from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import config_validation as cv, selector
 from homeassistant.util import slugify
 
 from .const import (
     CONF_ARRIVAL_TIME,
     CONF_CALENDAR_SYNC,
     CONF_CHILD_NAME,
+    CONF_CHILD_NAME_DISPLAY,
     CONF_CUSTODY_TYPE,
     CONF_DEPARTURE_TIME,
     CONF_EXCEPTIONS,
@@ -61,6 +62,14 @@ def _validate_time(value: str) -> str:
     return f"{hour_i:02d}:{minute_i:02d}"
 
 
+def _format_child_name(value: str) -> str:
+    """Normalize child name to ASCII words recognized by Home Assistant."""
+    normalized = slugify(value, separator=" ").strip()
+    if not normalized:
+        return ""
+    return " ".join(part.capitalize() for part in normalized.split())
+
+
 class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle the step-driven configuration."""
 
@@ -74,6 +83,23 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
         if user_input:
             cleaned_input = dict(user_input)
+
+            name_value = cleaned_input.get(CONF_CHILD_NAME)
+            if isinstance(name_value, str):
+                display_name = name_value.strip()
+                formatted_name = _format_child_name(display_name)
+                if formatted_name:
+                    cleaned_input[CONF_CHILD_NAME_DISPLAY] = display_name
+                    cleaned_input[CONF_CHILD_NAME] = formatted_name
+                else:
+                    errors[CONF_CHILD_NAME] = "invalid_child_name"
+            else:
+                errors[CONF_CHILD_NAME] = "invalid_child_name"
+
+            icon_value = cleaned_input.get(CONF_ICON)
+            if icon_value and not str(icon_value).startswith("mdi:"):
+                errors[CONF_ICON] = "invalid_icon"
+
             photo_value = cleaned_input.get(CONF_PHOTO)
             if isinstance(photo_value, str):
                 if photo_value.strip():
@@ -95,7 +121,7 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         schema = vol.Schema(
             {
                 vol.Required(CONF_CHILD_NAME): cv.string,
-                vol.Optional(CONF_ICON, default="mdi:account-child"): cv.string,
+                vol.Optional(CONF_ICON, default="mdi:account-child"): selector.IconSelector(),
                 vol.Optional(CONF_PHOTO): cv.string,
             },
             extra=vol.ALLOW_EXTRA,
@@ -141,7 +167,8 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Advanced optional settings (step 4)."""
         if user_input:
             self._data.update(user_input)
-            return self.async_create_entry(title=self._data[CONF_CHILD_NAME], data=self._data)
+            title = self._data.get(CONF_CHILD_NAME_DISPLAY, self._data[CONF_CHILD_NAME])
+            return self.async_create_entry(title=title, data=self._data)
 
         schema = vol.Schema(
             {

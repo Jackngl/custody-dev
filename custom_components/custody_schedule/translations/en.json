@@ -7,7 +7,7 @@
         "description": "Enter the basic information about the child.",
         "data": {
           "child_name": "Child name",
-          "icon": "Icon (emoji or mdi:* )",
+          "icon": "Icon (MDI search)",
           "photo": "Photo (URL or /local path)"
         }
       },
@@ -45,6 +45,8 @@
     }
   },
   "error": {
-    "invalid_local_photo": "Use a URL, media source, or place the file under /config/www so it is available as /local/..."
+    "invalid_local_photo": "Use a URL, media source, or place the file under /config/www so it is available as /local/...",
+    "invalid_child_name": "Enter at least one letter or digit (accents will be stripped automatically).",
+    "invalid_icon": "Select an mdi:* icon."
   }
 }
