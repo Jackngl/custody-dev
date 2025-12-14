@@ -21,4 +21,3 @@ jobs:
         with:
           category: integration
           ignore: brands
-          depth: 1

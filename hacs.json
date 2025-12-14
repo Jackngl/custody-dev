@@ -1,0 +1,9 @@
+{
+  "name": "Custody Schedule",
+  "content_in_root": false,
+  "country": [
+    "FR"
+  ],
+  "domain": "custody_schedule",
+  "render_readme": true
+}
