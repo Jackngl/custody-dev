@@ -1,0 +1,35 @@
+set_manual_dates:
+  name: Définir des dates manuelles
+  description: Ajoute des périodes ponctuelles de présence.
+  fields:
+    entry_id:
+      description: ID de l'intégration (visible dans les paramètres).
+      example: 1234567890abcdef1234567890abcdef
+    dates:
+      description: Liste de périodes à appliquer.
+      example:
+        - start: "2024-02-09T18:00:00+01:00"
+          end: "2024-02-12T19:30:00+01:00"
+          label: "Vacances chez papa"
+
+override_presence:
+  name: Forcer la présence
+  description: Force l'état présent/absent pour une durée donnée.
+  fields:
+    entry_id:
+      description: ID de l'intégration (visible dans les paramètres).
+      example: 1234567890abcdef1234567890abcdef
+    state:
+      description: on = présent, off = absent.
+      example: "on"
+    duration:
+      description: Durée en minutes (optionnel).
+      example: 120
+
+refresh_schedule:
+  name: Recalculer le planning
+  description: Déclenche immédiatement un recalcul.
+  fields:
+    entry_id:
+      description: ID de l'intégration (visible dans les paramètres).
+      example: 1234567890abcdef1234567890abcdef

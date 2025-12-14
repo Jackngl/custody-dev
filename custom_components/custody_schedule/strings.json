@@ -1,0 +1,47 @@
+{
+  "title": "Custody Schedule",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Child information",
+        "description": "Enter the basic information about the child.",
+        "data": {
+          "child_name": "Child name",
+          "icon": "Icon (emoji or mdi:* )",
+          "photo": "Photo URL"
+        }
+      },
+      "custody": {
+        "title": "Custody rules",
+        "description": "Define the custody rhythm and hours.",
+        "data": {
+          "custody_type": "Custody type",
+          "reference_year": "Reference year (even/odd)",
+          "start_day": "Cycle start day",
+          "arrival_time": "Arrival time",
+          "departure_time": "Departure time",
+          "location": "Exchange location"
+        }
+      },
+      "vacations": {
+        "title": "School vacations",
+        "description": "Select the school zone and holiday rules.",
+        "data": {
+          "zone": "School zone",
+          "vacation_rule": "Vacation rule",
+          "summer_rule": "Summer break rule"
+        }
+      },
+      "advanced": {
+        "title": "Advanced options",
+        "description": "Optional features and notes.",
+        "data": {
+          "notes": "Notes",
+          "notifications": "Enable notifications",
+          "calendar_sync": "Enable Google Calendar sync (placeholder)",
+          "exceptions": "Custom exceptions"
+        }
+      }
+    }
+  }
+}

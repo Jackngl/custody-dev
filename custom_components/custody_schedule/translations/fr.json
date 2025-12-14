@@ -1,0 +1,47 @@
+{
+  "title": "Planning de garde",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Enfant",
+        "description": "Saisir les informations principales de l'enfant.",
+        "data": {
+          "child_name": "Nom de l'enfant",
+          "icon": "Icône (emoji ou mdi:*)",
+          "photo": "URL photo"
+        }
+      },
+      "custody": {
+        "title": "Règles de garde",
+        "description": "Choisir le rythme et les horaires.",
+        "data": {
+          "custody_type": "Type de garde",
+          "reference_year": "Année de référence (paire/impaire)",
+          "start_day": "Jour de départ du cycle",
+          "arrival_time": "Heure d'arrivée",
+          "departure_time": "Heure de départ",
+          "location": "Lieu d'échange"
+        }
+      },
+      "vacations": {
+        "title": "Vacances scolaires",
+        "description": "Sélectionner la zone et les règles pendant les vacances.",
+        "data": {
+          "zone": "Zone scolaire",
+          "vacation_rule": "Règle vacances",
+          "summer_rule": "Règle grandes vacances"
+        }
+      },
+      "advanced": {
+        "title": "Options avancées",
+        "description": "Fonctionnalités optionnelles et notes.",
+        "data": {
+          "notes": "Notes",
+          "notifications": "Activer les notifications",
+          "calendar_sync": "Activer la synchro Google Calendar (placeholder)",
+          "exceptions": "Exceptions personnalisées"
+        }
+      }
+    }
+  }
+}
