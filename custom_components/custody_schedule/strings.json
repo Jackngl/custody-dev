@@ -7,7 +7,7 @@
         "description": "Enter the basic information about the child.",
         "data": {
           "child_name": "Child name",
-          "icon": "Icon (MDI search)",
+          "icon": "Icon (mdi search)",
           "photo": "Photo (URL or /local path)"
         }
       },

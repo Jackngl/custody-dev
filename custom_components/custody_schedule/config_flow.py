@@ -96,11 +96,11 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 errors[CONF_CHILD_NAME] = "invalid_child_name"
 
-            icon_value = cleaned_input.get(CONF_ICON, "mdi:account-child")
+            icon_value = cleaned_input.get(CONF_ICON, "mdi:account")
             if isinstance(icon_value, dict):
-                icon_value = icon_value.get("icon")
-            if not isinstance(icon_value, str) or not icon_value.startswith("mdi:"):
-                errors[CONF_ICON] = "invalid_icon"
+                icon_value = icon_value.get("icon", icon_value.get("id"))
+            if not isinstance(icon_value, str) or not icon_value.strip():
+                cleaned_input[CONF_ICON] = "mdi:account"
             else:
                 cleaned_input[CONF_ICON] = icon_value
 
@@ -125,7 +125,7 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         schema = vol.Schema(
             {
                 vol.Required(CONF_CHILD_NAME): cv.string,
-                vol.Optional(CONF_ICON, default="mdi:account-child"): selector.IconSelector(),
+                vol.Optional(CONF_ICON, default="mdi:account"): selector.IconSelector(),
                 vol.Optional(CONF_PHOTO): cv.string,
             },
             extra=vol.ALLOW_EXTRA,
