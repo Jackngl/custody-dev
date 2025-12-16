@@ -17,14 +17,36 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Debug - Show environment
+        run: |
+          echo "::group::Environment Info"
+          echo "Repository: ${{ github.repository }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "SHA: ${{ github.sha }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Event: ${{ github.event_name }}"
+          echo "::endgroup::"
+
       - name: Configure Git
         run: |
+          echo "::group::Configuring Git"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config --list | grep -E "(user.name|user.email)"
+          echo "::endgroup::"
 
       - name: Read version from manifest
         id: version
         run: |
+          echo "::group::Reading version from manifest"
+          echo "Checking manifest file: custom_components/custody_schedule/manifest.json"
+          if [ ! -f "custom_components/custody_schedule/manifest.json" ]; then
+            echo "ERROR: manifest.json not found!"
+            ls -la custom_components/custody_schedule/ || echo "Directory does not exist"
+            exit 1
+          fi
+          cat custom_components/custody_schedule/manifest.json
+          echo ""
           VERSION=$(python - <<'PY'
 import json, pathlib
 manifest = pathlib.Path("custom_components/custody_schedule/manifest.json")
@@ -32,53 +54,100 @@ data = json.loads(manifest.read_text(encoding="utf-8"))
 print(data.get("version", "").strip())
 PY
 )
+          echo "Extracted version: '$VERSION'"
           if [ -z "$VERSION" ]; then
-            echo "Version not found in manifest" >&2
+            echo "ERROR: Version not found in manifest" >&2
             exit 1
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Version: $VERSION"
+          echo "::endgroup::"
 
       - name: Fetch all tags
         run: |
+          echo "::group::Fetching tags"
+          echo "Fetching all tags from remote..."
           git fetch --tags --force
+          echo "Local tags:"
+          git tag -l | tail -10 || echo "No tags found"
+          echo "::endgroup::"
 
       - name: Check if tag exists
         id: check_tag
         run: |
-          if git rev-parse "v${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
-            echo "Tag v${{ steps.version.outputs.version }} already exists"
+          echo "::group::Checking if tag exists"
+          TAG_NAME="v${{ steps.version.outputs.version }}"
+          echo "Checking for tag: $TAG_NAME"
+          if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Tag $TAG_NAME already exists locally"
+            git show "$TAG_NAME" --no-patch --format="%H %s" || true
             echo "exists=true" >> "$GITHUB_OUTPUT"
           else
-            echo "Tag v${{ steps.version.outputs.version }} does not exist, will create it"
+            echo "Tag $TAG_NAME does not exist locally, will create it"
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
+          echo "Tag exists: ${{ steps.check_tag.outputs.exists }}"
+          echo "::endgroup::"
 
       - name: Create and push tag
         if: steps.check_tag.outputs.exists == 'false'
         run: |
-          git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}"
-          git push origin "v${{ steps.version.outputs.version }}"
-          echo "Tag v${{ steps.version.outputs.version }} created and pushed"
+          echo "::group::Creating and pushing tag"
+          TAG_NAME="v${{ steps.version.outputs.version }}"
+          echo "Creating tag: $TAG_NAME"
+          git tag -a "$TAG_NAME" -m "Release v${{ steps.version.outputs.version }}"
+          echo "Tag created locally"
+          git show "$TAG_NAME" --no-patch --format="%H %s" || true
+          echo "Pushing tag to remote..."
+          git push origin "$TAG_NAME" || {
+            echo "ERROR: Failed to push tag"
+            git remote -v
+            exit 1
+          }
+          echo "Tag $TAG_NAME created and pushed successfully"
+          echo "::endgroup::"
 
       - name: Check if release exists
         id: check_release
         run: |
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+          echo "::group::Checking if release exists"
+          TAG_NAME="v${{ steps.version.outputs.version }}"
+          API_URL="https://api.github.com/repos/${{ github.repository }}/releases/tags/$TAG_NAME"
+          echo "Checking release for tag: $TAG_NAME"
+          echo "API URL: $API_URL"
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/${{ github.repository }}/releases/tags/v${{ steps.version.outputs.version }}")
-          echo "Release check response: $RESPONSE"
-          if [ "$RESPONSE" = "200" ]; then
-            echo "Release v${{ steps.version.outputs.version }} already exists"
+            "$API_URL" 2>&1)
+          
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+          
+          echo "HTTP Response Code: $HTTP_CODE"
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "Release $TAG_NAME already exists"
+            echo "$BODY" | jq -r '.name, .tag_name, .published_at' 2>/dev/null || echo "Response: $BODY"
             echo "exists=true" >> "$GITHUB_OUTPUT"
+          elif [ "$HTTP_CODE" = "404" ]; then
+            echo "Release $TAG_NAME does not exist (404), will create it"
+            echo "exists=false" >> "$GITHUB_OUTPUT"
           else
-            echo "Release v${{ steps.version.outputs.version }} does not exist, will create it"
+            echo "WARNING: Unexpected response code $HTTP_CODE"
+            echo "Response body: $BODY"
+            echo "Will attempt to create release anyway"
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
+          echo "Release exists: ${{ steps.check_release.outputs.exists }}"
+          echo "::endgroup::"
 
       - name: Create GitHub Release
         if: steps.check_release.outputs.exists == 'false'
+        run: |
+          echo "::group::Creating GitHub Release"
+          TAG_NAME="v${{ steps.version.outputs.version }}"
+          echo "Creating release for tag: $TAG_NAME"
+          echo "Repository: ${{ github.repository }}"
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.version.outputs.version }}
@@ -92,3 +161,25 @@ PY
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Verify release creation
+        if: steps.check_release.outputs.exists == 'false'
+        run: |
+          echo "::group::Verifying release creation"
+          TAG_NAME="v${{ steps.version.outputs.version }}"
+          sleep 2
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/$TAG_NAME")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✓ Release $TAG_NAME created successfully"
+            echo "$RESPONSE" | head -n-1 | jq -r '.html_url' 2>/dev/null || echo "Release URL available"
+          else
+            echo "✗ Release creation may have failed (HTTP $HTTP_CODE)"
+            echo "Response: $RESPONSE"
+            exit 1
+          fi
+          echo "::endgroup::"
