@@ -49,14 +49,17 @@ class SchoolHolidayClient:
     def _normalize_zone(self, zone: str) -> str:
         """Normalize zone name for API compatibility.
         
-        The API uses specific zone names. For DOM-TOM, we default to Guadeloupe
-        as it's the most common. Users can configure a specific territory if needed.
+        The API uses "Zone A", "Zone B", "Zone C" format in the zones field,
+        but the refine.zones filter might need just "A", "B", "C".
+        However, testing shows the filter doesn't work well, so we'll fetch all
+        and filter manually.
         """
         zone_mapping = {
             "Corse": "Corse",
             "DOM-TOM": "Guadeloupe",  # Default to Guadeloupe for DOM-TOM
             # Other DOM-TOM territories available: Martinique, Guyane, La Réunion, Mayotte
         }
+        # For zones A, B, C, keep as is for now (we'll filter manually)
         return zone_mapping.get(zone, zone)
 
     async def async_list(self, zone: str, year: int | None = None) -> list[SchoolHoliday]:
@@ -164,7 +167,40 @@ class SchoolHolidayClient:
 
             holidays: list[SchoolHoliday] = []
             records = payload.get("records", [])
-            LOGGER.info("Found %d records for zone %s, year %s", len(records), normalized_zone, school_year)
+            LOGGER.info("Found %d records for zone %s (normalized: %s), year %s", 
+                       len(records), zone, normalized_zone, school_year)
+            
+            # If no records with zone filter, try fetching all and filtering manually
+            if len(records) == 0 and normalized_zone in ["A", "B", "C"]:
+                LOGGER.debug("No records with zone filter, trying without filter and filtering manually")
+                url_all = (
+                    "https://data.education.gouv.fr/api/records/1.0/search/"
+                    f"?dataset=fr-en-calendrier-scolaire"
+                    f"&refine.annee_scolaire={school_year}"
+                    f"&rows=100"
+                )
+                try:
+                    async with self._session.get(url_all, timeout=aiohttp.ClientTimeout(total=20)) as resp2:
+                        resp2.raise_for_status()
+                        payload_all = await resp2.json()
+                        records_all = payload_all.get("records", [])
+                        LOGGER.debug("Found %d total records without zone filter", len(records_all))
+                        
+                        # Filter manually for the zone
+                        for r in records_all:
+                            fields = r.get("fields", {})
+                            zone_field = fields.get("zones") or fields.get("zone") or ""
+                            # Check if zone matches (could be "Zone C", "C", or contain "C")
+                            if normalized_zone in str(zone_field) or f"Zone {normalized_zone}" in str(zone_field):
+                                records.append(r)
+                        LOGGER.info("After manual filtering, found %d records for zone %s", len(records), zone)
+                except Exception as err:
+                    LOGGER.warning("Failed to fetch all records for manual filtering: %s", err)
+            
+            if len(records) == 0:
+                LOGGER.warning("No records found for zone %s (normalized: %s), year %s. "
+                              "This might indicate an API issue or incorrect zone name.", 
+                              zone, normalized_zone, school_year)
             
             for record in records:
                 fields = record.get("fields", {})

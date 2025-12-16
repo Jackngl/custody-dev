@@ -232,7 +232,13 @@ class CustodyScheduleManager:
             offset = timedelta()
             for segment in pattern:
                 segment_start = pointer + offset
-                segment_end = segment_start + timedelta(days=segment["days"])
+                # For alternate_weekend with 2 days "on", it means Friday to Sunday
+                # So we need segment_start + 2 days to get to Sunday (Fri=0, Sat=1, Sun=2)
+                if custody_type == "alternate_weekend" and segment["state"] == "on":
+                    segment_end = segment_start + timedelta(days=2)  # Friday -> Sunday
+                else:
+                    # For other cases: if segment is N days, it spans from day 0 to day N-1
+                    segment_end = segment_start + timedelta(days=segment["days"] - 1)
                 if segment["state"] == "on":
                     windows.append(
                         CustodyWindow(
@@ -612,11 +618,19 @@ class CustodyScheduleManager:
         Returns:
             (name, start_date, end_date, days_until, raw_holidays_list)
         """
+        from .const import LOGGER
+        
         zone = self._config.get(CONF_ZONE)
         if not zone:
+            LOGGER.warning("No zone configured, cannot fetch school holidays")
             return None, None, None, None, []
 
+        LOGGER.debug("Fetching holidays for zone=%s, year=%s", zone, now.year)
         holidays = await self._holidays.async_list(zone, now.year)
+        LOGGER.debug("Retrieved %d holidays from API", len(holidays))
+        
+        if not holidays:
+            LOGGER.warning("No holidays found for zone %s, year %s", zone, now.year)
         
         # Sort holidays by start date
         sorted_holidays = sorted(holidays, key=lambda h: h.start)
@@ -659,11 +673,17 @@ class CustodyScheduleManager:
         next_vacation = None
         for holiday in sorted_holidays:
             adjusted_start = self._adjust_vacation_start(holiday.start, school_level)
+            LOGGER.debug("Checking holiday: %s, official_start=%s, adjusted_start=%s, now=%s", 
+                        holiday.name, holiday.start, adjusted_start, now)
             if adjusted_start > now:
                 next_vacation = holiday
+                LOGGER.debug("Found next vacation: %s, adjusted_start=%s", holiday.name, adjusted_start)
                 break
         
         if not next_vacation:
+            LOGGER.warning("No next vacation found after %s. Total holidays: %d", now, len(sorted_holidays))
+            if sorted_holidays:
+                LOGGER.debug("Last holiday: %s (ends %s)", sorted_holidays[-1].name, sorted_holidays[-1].end)
             return None, None, None, None, school_holidays_raw
         
         # Calculate days until vacation using adjusted start
@@ -682,22 +702,43 @@ class CustodyScheduleManager:
         """Adjust vacation start date based on school level.
         
         - Primary: Friday afternoon (departure time)
-          - L'API retourne déjà le vendredi, on utilise directement cette date avec l'heure de départ
+          - L'API retourne le vendredi à 23h UTC, qui devient samedi 00h en heure locale
+          - On extrait la date et on s'assure que c'est un vendredi (si c'est samedi, on recule d'1 jour)
         - Middle/High: Saturday at arrival time
           - Si l'API retourne samedi, on l'utilise directement
           - Sinon, on trouve le samedi suivant
         
         Args:
-            official_start: Official vacation start date from API (déjà le vendredi pour primaire, samedi pour collège/lycée)
+            official_start: Official vacation start date from API (en heure locale après conversion)
             school_level: "primary", "middle", or "high"
         
         Returns:
             Adjusted start datetime
         """
+        from .const import LOGGER
+        
         if school_level == "primary":
             # Primary: Friday afternoon at departure time
-            # L'API retourne déjà le vendredi, on utilise directement cette date avec l'heure de départ
-            return self._apply_time(official_start, self._departure_time)
+            # L'API retourne le vendredi à 23h UTC, qui devient samedi 00h en heure locale
+            # On extrait la date et on s'assure que c'est un vendredi
+            date_only = official_start.date()
+            weekday = date_only.weekday()  # 0=Monday, 4=Friday, 5=Saturday
+            weekday_names = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
+            
+            LOGGER.debug("Adjusting vacation start for primary: official_start=%s (%s), weekday=%d", 
+                        official_start, weekday_names[weekday], weekday)
+            
+            # Si c'est samedi (5), c'est que l'API a retourné vendredi 23h UTC qui est devenu samedi 00h local
+            # On recule d'1 jour pour avoir le vendredi
+            if weekday == 5:  # Saturday
+                date_only = date_only - timedelta(days=1)
+                LOGGER.debug("Was Saturday, adjusted to Friday: %s", date_only)
+            # Si c'est déjà vendredi (4), on l'utilise directement
+            
+            # Créer un nouveau datetime avec la date corrigée et l'heure de départ
+            friday_datetime = datetime.combine(date_only, self._departure_time, official_start.tzinfo)
+            LOGGER.debug("Final adjusted datetime: %s", friday_datetime)
+            return friday_datetime
         else:
             # Middle/High: Saturday at arrival time
             # If official_start is Saturday, use it; otherwise find the next Saturday
