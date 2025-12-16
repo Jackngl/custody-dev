@@ -65,7 +65,8 @@ class SchoolHolidayClient:
         If year is provided, fetches for that calendar year's school year(s).
         Otherwise, uses current date to determine school year.
         """
-        now = dt_util.utcnow()
+        # Use local timezone for school year determination (French school years are calendar-based)
+        now = dt_util.now()
         
         # Get school years that might contain holidays for this calendar year
         # A calendar year can span two school years (e.g., 2024 spans 2023-2024 and 2024-2025)
@@ -218,7 +219,8 @@ class SchoolHolidayClient:
     async def async_test_connection(self, zone: str, year: str | None = None) -> dict[str, Any]:
         """Test the API connection and return diagnostic information."""
         if year is None:
-            now = dt_util.utcnow()
+            # Use local timezone for school year determination
+            now = dt_util.now()
             year = self._get_school_year(now)
         
         normalized_zone = self._normalize_zone(zone)

@@ -370,9 +370,11 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if api_url and api_url.strip():
                 # Basic validation: must contain {year} and {zone} placeholders
                 if "{year}" not in api_url or "{zone}" not in api_url:
+                    # Merge user input with existing data to preserve user's entry
+                    merged_data = {**self._data, **cleaned}
                     return self.async_show_form(
                         step_id="advanced",
-                        data_schema=self._get_advanced_schema(self._data),
+                        data_schema=self._get_advanced_schema(merged_data),
                         errors={CONF_HOLIDAY_API_URL: "api_url_missing_placeholders"},
                     )
                 cleaned[CONF_HOLIDAY_API_URL] = api_url.strip()
@@ -540,10 +542,12 @@ class CustodyScheduleOptionsFlow(config_entries.OptionsFlow):
             if api_url and api_url.strip():
                 # Basic validation: must contain {year} and {zone} placeholders
                 if "{year}" not in api_url or "{zone}" not in api_url:
+                    # Merge user input with existing data to preserve user's entry
                     data = {**self._entry.data, **(self._entry.options or {})}
+                    merged_data = {**data, **cleaned}
                     return self.async_show_form(
                         step_id="advanced",
-                        data_schema=self._get_advanced_schema(data),
+                        data_schema=self._get_advanced_schema(merged_data),
                         errors={CONF_HOLIDAY_API_URL: "api_url_missing_placeholders"},
                     )
                 cleaned[CONF_HOLIDAY_API_URL] = api_url.strip()
