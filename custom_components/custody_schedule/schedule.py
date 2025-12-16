@@ -226,7 +226,14 @@ class CustodyScheduleManager:
         pattern = type_def["pattern"]
         windows: list[CustodyWindow] = []
         reference_start = self._reference_start(now, custody_type)
-        pointer = reference_start
+        
+        # For alternate_weekend, _reference_start returns the Friday that starts the "on" period
+        # But the pattern starts with "off" period, so we need to go back 12 days
+        if custody_type == "alternate_weekend":
+            # Go back to the start of the cycle (12 days before the "on" period)
+            pointer = reference_start - timedelta(days=12)
+        else:
+            pointer = reference_start
 
         while pointer < horizon:
             offset = timedelta()
@@ -540,6 +547,56 @@ class CustodyScheduleManager:
         if custody_type in ("even_weekends", "odd_weekends"):
             target_parity = 0 if custody_type == "even_weekends" else 1
             base = self._first_monday_with_week_parity(reference_year, target_parity)
+        elif custody_type == "alternate_weekend":
+            # For alternate_weekend, the pattern is: 12 days off, 2 days on
+            # The "on" period is the weekend (Friday-Sunday)
+            # We need to find the Friday that starts the next "on" period
+            from .const import LOGGER
+            start_day = WEEKDAY_LOOKUP.get(self._config.get(CONF_START_DAY, "friday").lower(), 4)
+            
+            # Find the next Friday from now
+            days_to_friday = (start_day - now.weekday()) % 7
+            if days_to_friday == 0:
+                # Today is Friday
+                if now.time() < self._arrival_time:
+                    days_to_friday = 0  # Use today
+                else:
+                    days_to_friday = 7  # Use next Friday
+            
+            next_friday = now + timedelta(days=days_to_friday)
+            next_friday = next_friday.replace(hour=0, minute=0, second=0, microsecond=0)
+            
+            LOGGER.debug("alternate_weekend: now=%s, days_to_friday=%d, next_friday=%s", 
+                        now, days_to_friday, next_friday)
+            
+            # For alternate_weekend, we need to determine which Friday in the 2-week cycle
+            # The cycle alternates every 2 weeks: week 1 (off), week 2 (on)
+            # We use the reference year to determine the cycle phase
+            # Find the first Friday of the reference year
+            anchor = datetime(reference_year, 1, 1, tzinfo=self._tz)
+            days_to_first_friday = (start_day - anchor.weekday()) % 7
+            if days_to_first_friday == 0:
+                days_to_first_friday = 7
+            first_friday_ref = anchor + timedelta(days=days_to_first_friday)
+            
+            # Calculate how many weeks since the first Friday of reference year
+            weeks_since_ref = (next_friday - first_friday_ref).days // 7
+            # Determine which week in the 2-week cycle (0 or 1)
+            cycle_week = weeks_since_ref % 2
+            
+            LOGGER.debug("alternate_weekend: first_friday_ref=%s, weeks_since_ref=%d, cycle_week=%d", 
+                        first_friday_ref, weeks_since_ref, cycle_week)
+            
+            # The "on" period is when cycle_week == 1 (second week of the 2-week cycle)
+            # If we're at cycle_week == 0, we need to go to the next Friday (cycle_week == 1)
+            if cycle_week == 0:
+                # We're in the first week (off period), go to next Friday (second week, on period)
+                LOGGER.debug("alternate_weekend: in first week (off), moving to next Friday (on)")
+                next_friday += timedelta(days=7)  # Next Friday
+            # If cycle_week == 1, we're already at the "on" Friday, use it as is
+            
+            LOGGER.debug("alternate_weekend: final reference_start=%s", next_friday)
+            return next_friday
         else:
             base = datetime(reference_year, 1, 1, tzinfo=self._tz)
 
@@ -636,14 +693,34 @@ class CustodyScheduleManager:
         sorted_holidays = sorted(holidays, key=lambda h: h.start)
         
         # Build raw holidays list for debugging/display
+        # Filter to only show holidays from current year onwards
         school_holidays_raw = []
         for holiday in sorted_holidays:
+            # Only include holidays that haven't ended yet (or are in current/future years)
+            if holiday.end.year < now.year:
+                continue
+            
+            # Format dates in French format without time
+            start_date_fr = holiday.start.strftime("%d %B %Y")
+            end_date_fr = holiday.end.strftime("%d %B %Y")
+            
+            # French weekday names
+            weekday_fr = {
+                "Monday": "Lundi",
+                "Tuesday": "Mardi", 
+                "Wednesday": "Mercredi",
+                "Thursday": "Jeudi",
+                "Friday": "Vendredi",
+                "Saturday": "Samedi",
+                "Sunday": "Dimanche"
+            }
+            
             school_holidays_raw.append({
                 "name": holiday.name,
-                "start": holiday.start.isoformat(),
-                "end": holiday.end.isoformat(),
-                "start_weekday": holiday.start.strftime("%A"),
-                "end_weekday": holiday.end.strftime("%A"),
+                "start": start_date_fr,
+                "end": end_date_fr,
+                "start_weekday": weekday_fr.get(holiday.start.strftime("%A"), holiday.start.strftime("%A")),
+                "end_weekday": weekday_fr.get(holiday.end.strftime("%A"), holiday.end.strftime("%A")),
             })
         
         # Get school level (default to primary)

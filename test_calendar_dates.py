@@ -63,58 +63,61 @@ class MockScheduleManager:
         target_weekday = WEEKDAY_LOOKUP.get(start_day, 4)  # Default to Friday
         
         if custody_type == "alternate_weekend":
-            # For alternate_weekend, find the Friday that starts the cycle
-            # The cycle is 14 days: 12 off, 2 on
-            # We need an anchor date to calculate from
+            # For alternate_weekend, we need to find the Friday that starts a custody period
+            # The cycle is 14 days: 12 off, 2 on (weekend)
+            start_day = self._config.get(CONF_START_DAY, "friday")
+            target_weekday = WEEKDAY_LOOKUP.get(start_day, 4)  # Default to Friday
             
-            # Use a known reference: January 1, 2024 was a Monday
-            # Find the first Friday of 2024
-            anchor_year = 2024
-            anchor = datetime(anchor_year, 1, 1)
-            days_to_first_friday = (4 - anchor.weekday()) % 7
-            if days_to_first_friday == 0:
-                days_to_first_friday = 7
-            first_friday_2024 = anchor + timedelta(days=days_to_first_friday)
-            
-            # Adjust based on reference year
+            # Adjust reference year
             ref_year = now.year
             if reference_year == "even" and ref_year % 2 != 0:
                 ref_year -= 1
             elif reference_year == "odd" and ref_year % 2 == 0:
                 ref_year -= 1
             
-            # Find first Friday of reference year
-            ref_anchor = datetime(ref_year, 1, 1)
-            days_to_ref_friday = (4 - ref_anchor.weekday()) % 7
-            if days_to_ref_friday == 0:
-                days_to_ref_friday = 7
-            first_friday_ref = ref_anchor + timedelta(days=days_to_ref_friday)
-            
-            # Find the most recent Friday from now
+            # Find the next Friday from now (same logic as real code)
             days_to_friday = (target_weekday - now.weekday()) % 7
-            if days_to_friday == 0 and now.time() < self._arrival_time:
-                days_to_friday = 0
-            elif days_to_friday == 0:
-                days_to_friday = 7
+            if days_to_friday == 0:
+                # Today is Friday
+                if now.time() < self._arrival_time:
+                    days_to_friday = 0  # Use today
+                else:
+                    days_to_friday = 7  # Use next Friday
             
-            candidate_friday = now + timedelta(days=days_to_friday)
-            candidate_friday = candidate_friday.replace(hour=0, minute=0, second=0, microsecond=0)
+            candidate = now + timedelta(days=days_to_friday)
+            candidate = candidate.replace(hour=0, minute=0, second=0, microsecond=0)
             
-            # Calculate position in 14-day cycle
-            days_since_ref = (candidate_friday - first_friday_ref).days
-            cycle_position = days_since_ref % 14
+            print(f"   🔍 Found next Friday: {candidate} ({candidate.strftime('%A')})")
             
-            # Position 12-13 is the "on" period (Friday-Saturday of the weekend)
-            # Position 0-11 is the "off" period
-            if cycle_position < 12:
-                # We're in the "off" period, find the next "on" Friday
-                days_to_next_on = 12 - cycle_position
-                candidate_friday += timedelta(days=days_to_next_on)
-            elif cycle_position >= 14:
-                # Wrap around
-                candidate_friday += timedelta(days=14 - cycle_position + 12)
+            # Use January 1st of reference year as anchor
+            anchor = datetime(ref_year, 1, 1)
+            days_to_first_target = (target_weekday - anchor.weekday()) % 7
+            if days_to_first_target == 0:
+                days_to_first_target = 7
+            first_target_day = anchor + timedelta(days=days_to_first_target)
             
-            return candidate_friday
+            # Calculate position in 14-day cycle (2 weeks)
+            # We need to align on Fridays, so we calculate how many Fridays since the anchor
+            weeks_since_anchor = (candidate - first_target_day).days // 7
+            # Each cycle is 2 weeks (14 days), so cycle position is based on which week pair we're in
+            cycle_week = weeks_since_anchor % 2  # 0 or 1 (which week in the 2-week cycle)
+            
+            print(f"   📊 Cycle calculation:")
+            print(f"      First Friday of {ref_year}: {first_target_day}")
+            print(f"      Weeks since anchor: {weeks_since_anchor}")
+            print(f"      Cycle week: {cycle_week} (0=first week/off, 1=second week/on)")
+            
+            # If we're in the first week of the pair (week 0), we need to go to the second week (week 1, Friday)
+            # The "on" period is the Friday of the second week in the 2-week cycle
+            if cycle_week == 0:
+                # We're in the first week (off period), go to next Friday (second week, on period)
+                print(f"      In first week (off), moving to next Friday (on)")
+                candidate += timedelta(days=7)  # Next Friday
+            else:
+                print(f"      Already at second week (on) Friday")
+            
+            print(f"   ✅ Final reference start: {candidate} ({candidate.strftime('%A')})")
+            return candidate
         
         # For other custody types, use the original logic
         days_back = (now.weekday() - target_weekday) % 7
@@ -135,7 +138,14 @@ class MockScheduleManager:
         pattern = type_def["pattern"]
         windows: list[CustodyWindow] = []
         reference_start = self._reference_start(now, custody_type)
-        pointer = reference_start
+        
+        # For alternate_weekend, _reference_start returns the Friday that starts the "on" period
+        # But the pattern starts with "off" period, so we need to go back 12 days
+        if custody_type == "alternate_weekend":
+            # Go back to the start of the cycle (12 days before the "on" period)
+            pointer = reference_start - timedelta(days=12)
+        else:
+            pointer = reference_start
         
         print(f"\n📅 Reference start: {reference_start} ({reference_start.strftime('%A')})")
         print(f"📅 Current time: {now} ({now.strftime('%A')})")
@@ -207,8 +217,9 @@ def main():
     print(f"   Reference year: {config[CONF_REFERENCE_YEAR]}")
     print(f"   Start day: {config[CONF_START_DAY]}")
     
-    # Current time: 16 décembre 2025, 22:00
-    now = datetime(2025, 12, 16, 22, 0, 0)
+    # Current time: 17 décembre 2025 (mercredi), 22:00
+    now = datetime(2025, 12, 17, 22, 0, 0)
+    print(f"📅 Today is: {now.strftime('%A %d %B %Y')} (weekday={now.weekday()})")
     
     manager = MockScheduleManager(config)
     windows = manager._generate_pattern_windows(now)
@@ -223,9 +234,8 @@ def main():
         print(f"   Start: {first_window.start.strftime('%A %d %B %Y à %H:%M')}")
         print(f"   End:   {first_window.end.strftime('%A %d %B %Y à %H:%M')}")
         
-        # Expected: vendredi 18 déc à 16:15 → dimanche 20 déc à 19:00
-        # Or: vendredi 18 déc à 16:15 → dimanche 21 déc à 19:00 ?
-        expected_start = datetime(2025, 12, 18, 16, 15)
+        # Expected: vendredi 19 déc à 16:15 → dimanche 21 déc à 19:00
+        expected_start = datetime(2025, 12, 19, 16, 15)
         expected_end = datetime(2025, 12, 21, 19, 0)
         
         print(f"\n✅ Expected:")
