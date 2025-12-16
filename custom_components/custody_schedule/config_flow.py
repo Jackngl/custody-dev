@@ -28,6 +28,7 @@ from .const import (
     CONF_NOTIFICATIONS,
     CONF_PHOTO,
     CONF_REFERENCE_YEAR,
+    CONF_SCHOOL_LEVEL,
     CONF_START_DAY,
     CONF_SUMMER_RULE,
     CONF_VACATION_RULE,
@@ -81,6 +82,17 @@ def _zone_selector() -> selector.SelectSelector:
     return selector.SelectSelector(
         selector.SelectSelectorConfig(
             options=options_list,
+            mode=selector.SelectSelectorMode.DROPDOWN,
+        )
+    )
+
+
+def _school_level_selector() -> selector.SelectSelector:
+    """Return selector for school level."""
+    return selector.SelectSelector(
+        selector.SelectSelectorConfig(
+            options=["primary", "middle", "high"],
+            translation_key="school_level",
             mode=selector.SelectSelectorMode.DROPDOWN,
         )
     )
@@ -314,6 +326,9 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(
                     CONF_DEPARTURE_TIME, default=self._data.get(CONF_DEPARTURE_TIME, "19:00")
                 ): selector.TimeSelector(),
+                vol.Optional(
+                    CONF_SCHOOL_LEVEL, default=self._data.get(CONF_SCHOOL_LEVEL, "primary")
+                ): _school_level_selector(),
                 vol.Optional(CONF_LOCATION, default=self._data.get(CONF_LOCATION, "")): cv.string,
             }
         )
@@ -458,6 +473,9 @@ class CustodyScheduleOptionsFlow(config_entries.OptionsFlow):
                 vol.Required(
                     CONF_START_DAY, default=data.get(CONF_START_DAY, "monday")
                 ): _start_day_selector(),
+                vol.Optional(
+                    CONF_SCHOOL_LEVEL, default=data.get(CONF_SCHOOL_LEVEL, "primary")
+                ): _school_level_selector(),
             }
         )
         return self.async_show_form(step_id="custody", data_schema=schema)

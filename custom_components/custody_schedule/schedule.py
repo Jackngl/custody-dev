@@ -19,6 +19,7 @@ from .const import (
     CONF_LOCATION,
     CONF_NOTES,
     CONF_REFERENCE_YEAR,
+    CONF_SCHOOL_LEVEL,
     CONF_START_DAY,
     CONF_SUMMER_RULE,
     CONF_VACATION_RULE,
@@ -50,6 +51,10 @@ class CustodyComputation:
     days_remaining: int | None
     current_period: str
     vacation_name: str | None
+    next_vacation_name: str | None = None
+    next_vacation_start: datetime | None = None
+    next_vacation_end: datetime | None = None
+    days_until_vacation: int | None = None
     windows: list[CustodyWindow] = field(default_factory=list)
     attributes: dict[str, Any] = field(default_factory=dict)
 
@@ -153,6 +158,9 @@ class CustodyScheduleManager:
             days_remaining = max(0, round(delta.total_seconds() / 86400, 2))
 
         period, vacation_name = await self._determine_period(now_local)
+        
+        # Get next vacation information
+        next_vacation_name, next_vacation_start, next_vacation_end, days_until_vacation = await self._get_next_vacation(now_local)
 
         attributes = {
             ATTR_LOCATION: self._config.get(CONF_LOCATION),
@@ -167,6 +175,10 @@ class CustodyScheduleManager:
             days_remaining=days_remaining,
             current_period=period,
             vacation_name=vacation_name,
+            next_vacation_name=next_vacation_name,
+            next_vacation_start=next_vacation_start,
+            next_vacation_end=next_vacation_end,
+            days_until_vacation=days_until_vacation,
             windows=windows,
             attributes=attributes,
         )
@@ -282,13 +294,17 @@ class CustodyScheduleManager:
             elif rule == "even_weekends":
                 # Week-ends des semaines paires (samedi-dimanche)
                 # Trouver le samedi de la semaine de début
+                # (5 - start.weekday()) % 7 calcule correctement :
+                # - 0 si samedi (ce samedi)
+                # - 1-5 si lundi-vendredi (samedi de cette semaine)
+                # - 6 si dimanche (samedi de la semaine suivante)
                 days_until_saturday = (5 - start.weekday()) % 7
-                if days_until_saturday == 0 and start.weekday() != 5:
-                    days_until_saturday = 7
                 saturday = start + timedelta(days=days_until_saturday)
-                week_num = int(saturday.strftime("%U"))
-                # Si la semaine du samedi est impaire, passer à la semaine suivante
-                if week_num % 2 != 0:
+                # Use isocalendar() for reliable week number (ISO week: Monday=1, Sunday=7)
+                # Get the ISO week number and check parity
+                _, iso_week, _ = saturday.isocalendar()
+                # Si la semaine ISO du samedi est impaire, passer à la semaine suivante
+                if iso_week % 2 != 0:
                     saturday += timedelta(days=7)
                 sunday = saturday + timedelta(days=1)
                 window_start = self._apply_time(saturday, self._arrival_time)
@@ -296,13 +312,17 @@ class CustodyScheduleManager:
             elif rule == "odd_weekends":
                 # Week-ends des semaines impaires (samedi-dimanche)
                 # Trouver le samedi de la semaine de début
+                # (5 - start.weekday()) % 7 calcule correctement :
+                # - 0 si samedi (ce samedi)
+                # - 1-5 si lundi-vendredi (samedi de cette semaine)
+                # - 6 si dimanche (samedi de la semaine suivante)
                 days_until_saturday = (5 - start.weekday()) % 7
-                if days_until_saturday == 0 and start.weekday() != 5:
-                    days_until_saturday = 7
                 saturday = start + timedelta(days=days_until_saturday)
-                week_num = int(saturday.strftime("%U"))
-                # Si la semaine du samedi est paire, passer à la semaine suivante
-                if week_num % 2 == 0:
+                # Use isocalendar() for reliable week number (ISO week: Monday=1, Sunday=7)
+                # Get the ISO week number and check parity
+                _, iso_week, _ = saturday.isocalendar()
+                # Si la semaine ISO du samedi est paire, passer à la semaine suivante
+                if iso_week % 2 == 0:
                     saturday += timedelta(days=7)
                 sunday = saturday + timedelta(days=1)
                 window_start = self._apply_time(saturday, self._arrival_time)
@@ -578,6 +598,119 @@ class CustodyScheduleManager:
                 return "vacation", holiday.name
 
         return "school", None
+
+    async def _get_next_vacation(self, now: datetime) -> tuple[str | None, datetime | None, datetime | None, int | None]:
+        """Return information about the next upcoming vacation.
+        
+        If currently in vacation, returns the current vacation.
+        Otherwise, returns the next vacation that hasn't started yet.
+        
+        Adjusts the start date based on school level:
+        - Primary: Friday afternoon (departure time) before the official Saturday
+        - Middle/High: Saturday at arrival time
+        
+        Returns:
+            (name, start_date, end_date, days_until)
+        """
+        zone = self._config.get(CONF_ZONE)
+        if not zone:
+            return None, None, None, None
+
+        holidays = await self._holidays.async_list(zone, now.year)
+        
+        # Sort holidays by start date
+        sorted_holidays = sorted(holidays, key=lambda h: h.start)
+        
+        # Get school level (default to primary)
+        school_level = self._config.get(CONF_SCHOOL_LEVEL, "primary")
+        
+        # First, check if we're currently in a vacation
+        current_vacation = None
+        adjusted_start = None
+        for holiday in sorted_holidays:
+            # Adjust start date based on school level
+            adjusted_start = self._adjust_vacation_start(holiday.start, school_level)
+            if adjusted_start <= now <= holiday.end:
+                current_vacation = holiday
+                break
+        
+        if current_vacation:
+            # We're in vacation, return current vacation info with adjusted start
+            return (
+                current_vacation.name,
+                adjusted_start,
+                current_vacation.end,
+                0,  # Already in vacation
+            )
+        
+        # Not in vacation, find the next one
+        next_vacation = None
+        for holiday in sorted_holidays:
+            adjusted_start = self._adjust_vacation_start(holiday.start, school_level)
+            if adjusted_start > now:
+                next_vacation = holiday
+                break
+        
+        if not next_vacation:
+            return None, None, None, None
+        
+        # Calculate days until vacation using adjusted start
+        delta = adjusted_start - now
+        days_until = max(0, round(delta.total_seconds() / 86400, 2))
+        
+        return (
+            next_vacation.name,
+            adjusted_start,
+            next_vacation.end,
+            days_until,
+        )
+    
+    def _adjust_vacation_start(self, official_start: datetime, school_level: str) -> datetime:
+        """Adjust vacation start date based on school level.
+        
+        - Primary: Friday afternoon (departure time) before the official start
+        - Middle/High: Saturday at arrival time (or official start if it's Saturday)
+        
+        Args:
+            official_start: Official vacation start date from API (usually Saturday)
+            school_level: "primary", "middle", or "high"
+        
+        Returns:
+            Adjusted start datetime
+        """
+        if school_level == "primary":
+            # Primary: Friday afternoon at departure time
+            # Find the Friday before the official start date
+            # If official_start is Saturday, go back 1 day to Friday
+            # If official_start is Sunday-Friday, find the previous Friday
+            weekday = official_start.weekday()
+            if weekday == 5:  # Saturday
+                friday = official_start - timedelta(days=1)
+            elif weekday == 6:  # Sunday
+                friday = official_start - timedelta(days=2)
+            elif weekday == 4:  # Friday
+                friday = official_start - timedelta(days=7)  # Previous Friday
+            else:  # Monday (0) through Thursday (3)
+                # Go back to the Friday of the previous week
+                # Monday: 3 days back = Friday of previous week
+                # Tuesday: 4 days back = Friday of previous week
+                # Wednesday: 5 days back = Friday of previous week
+                # Thursday: 6 days back = Friday of previous week
+                days_back = weekday + 3
+                friday = official_start - timedelta(days=days_back)
+            return self._apply_time(friday, self._departure_time)
+        else:
+            # Middle/High: Saturday at arrival time
+            # If official_start is Saturday, use it; otherwise find the next Saturday
+            if official_start.weekday() == 5:  # Saturday
+                saturday = official_start
+            else:
+                # Find the next Saturday
+                days_to_saturday = (5 - official_start.weekday()) % 7
+                if days_to_saturday == 0:
+                    days_to_saturday = 7
+                saturday = official_start + timedelta(days=days_to_saturday)
+            return self._apply_time(saturday, self._arrival_time)
 
     def _evaluate_override(self, now: datetime) -> bool | None:
         """Return override state if active."""

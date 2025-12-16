@@ -20,6 +20,7 @@
           "start_day": "Jour de départ du cycle",
           "arrival_time": "Heure d'arrivée",
           "departure_time": "Heure de départ",
+          "school_level": "Niveau scolaire",
           "location": "Lieu d'échange"
         }
       },
@@ -61,7 +62,8 @@
         "data": {
           "custody_type": "Type de garde",
           "reference_year": "Année de référence (paire/impaire)",
-          "start_day": "Jour de départ du cycle"
+          "start_day": "Jour de départ du cycle",
+          "school_level": "Niveau scolaire"
         }
       },
       "schedule": {
@@ -147,6 +149,11 @@
       "friday": "Vendredi",
       "saturday": "Samedi",
       "sunday": "Dimanche"
+    },
+    "school_level": {
+      "primary": "Primaire",
+      "middle": "Collège",
+      "high": "Lycée"
     }
   }
 }

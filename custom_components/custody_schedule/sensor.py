@@ -23,6 +23,10 @@ from .const import (
     ATTR_NEXT_ARRIVAL,
     ATTR_NEXT_DEPARTURE,
     ATTR_VACATION_NAME,
+    ATTR_NEXT_VACATION_NAME,
+    ATTR_NEXT_VACATION_START,
+    ATTR_NEXT_VACATION_END,
+    ATTR_DAYS_UNTIL_VACATION,
     CONF_CHILD_NAME,
     CONF_CHILD_NAME_DISPLAY,
     CONF_PHOTO,
@@ -54,6 +58,15 @@ SENSORS: tuple[SensorDefinition, ...] = (
         UnitOfTime.DAYS,
     ),
     SensorDefinition("current_period", "Période actuelle", "mdi:school"),
+    SensorDefinition("next_vacation_name", "Prochaines vacances", "mdi:calendar-star"),
+    SensorDefinition(
+        "days_until_vacation",
+        "Jours jusqu'aux vacances",
+        "mdi:calendar-clock",
+        SensorDeviceClass.DURATION,
+        SensorStateClass.MEASUREMENT,
+        UnitOfTime.DAYS,
+    ),
 )
 
 
@@ -112,6 +125,10 @@ class CustodyScheduleSensor(CoordinatorEntity[CustodyComputation], SensorEntity)
             return data.days_remaining
         if self._definition.key == "current_period":
             return data.current_period
+        if self._definition.key == "next_vacation_name":
+            return data.next_vacation_name
+        if self._definition.key == "days_until_vacation":
+            return data.days_until_vacation
         return None
 
     @property
@@ -128,6 +145,10 @@ class CustodyScheduleSensor(CoordinatorEntity[CustodyComputation], SensorEntity)
             ATTR_NEXT_ARRIVAL: self._format_datetime(data.next_arrival),
             ATTR_NEXT_DEPARTURE: self._format_datetime(data.next_departure),
             ATTR_DAYS_REMAINING: data.days_remaining,
+            ATTR_NEXT_VACATION_NAME: data.next_vacation_name,
+            ATTR_NEXT_VACATION_START: self._format_datetime(data.next_vacation_start),
+            ATTR_NEXT_VACATION_END: self._format_datetime(data.next_vacation_end),
+            ATTR_DAYS_UNTIL_VACATION: data.days_until_vacation,
         }
         attrs.update(data.attributes)
         return {key: value for key, value in attrs.items() if value is not None}
