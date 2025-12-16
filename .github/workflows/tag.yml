@@ -47,13 +47,14 @@ jobs:
           fi
           cat custom_components/custody_schedule/manifest.json
           echo ""
-          VERSION=$(python3 -c "
-import json
-import pathlib
-manifest = pathlib.Path('custom_components/custody_schedule/manifest.json')
-data = json.loads(manifest.read_text(encoding='utf-8'))
-print(data.get('version', '').strip())
-")
+          VERSION=$(python3 << 'PYTHON_SCRIPT'
+          import json
+          import pathlib
+          manifest = pathlib.Path('custom_components/custody_schedule/manifest.json')
+          data = json.loads(manifest.read_text(encoding='utf-8'))
+          print(data.get('version', '').strip())
+          PYTHON_SCRIPT
+          )
           echo "Extracted version: '$VERSION'"
           if [ -z "$VERSION" ]; then
             echo "ERROR: Version not found in manifest" >&2
