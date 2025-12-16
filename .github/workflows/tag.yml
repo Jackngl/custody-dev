@@ -35,18 +35,28 @@ jobs:
           git config --list | grep -E "(user.name|user.email)"
           echo "::endgroup::"
 
-      - name: Read version from manifest
-        id: version
+      - name: Auto-increment version
         run: |
-          echo "::group::Reading version from manifest"
+          echo "::group::Auto-incrementing version"
           echo "Checking manifest file: custom_components/custody_schedule/manifest.json"
           if [ ! -f "custom_components/custody_schedule/manifest.json" ]; then
             echo "ERROR: manifest.json not found!"
             ls -la custom_components/custody_schedule/ || echo "Directory does not exist"
             exit 1
           fi
+          echo "Current manifest:"
           cat custom_components/custody_schedule/manifest.json
           echo ""
+          echo "Running auto-increment script..."
+          python3 scripts/update_version.py
+          echo "Updated manifest:"
+          cat custom_components/custody_schedule/manifest.json
+          echo "::endgroup::"
+
+      - name: Read version from manifest
+        id: version
+        run: |
+          echo "::group::Reading version from manifest"
           VERSION=$(python3 << 'PYTHON_SCRIPT'
           import json
           import pathlib
