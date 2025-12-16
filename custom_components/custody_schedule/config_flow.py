@@ -157,6 +157,10 @@ def _vacation_rule_selector() -> selector.SelectSelector:
         "odd_weeks": "Semaines impaires",
         "july": "Juillet",
         "august": "Août",
+        "first_week_even_year": "1ère semaine - années paires",
+        "first_week_odd_year": "1ère semaine - années impaires",
+        "second_week_even_year": "2ème semaine - années paires",
+        "second_week_odd_year": "2ème semaine - années impaires",
         "custom": "Personnalisé",
     }
     options_list = [{"value": "", "label": "Aucune"}]
@@ -182,6 +186,10 @@ def _summer_rule_selector() -> selector.SelectSelector:
         "august_second_half": "Août - 2ème moitié",
         "august_even_weeks": "Août - semaines paires",
         "august_odd_weeks": "Août - semaines impaires",
+        "july_even_year": "Juillet - années paires",
+        "july_odd_year": "Juillet - années impaires",
+        "august_even_year": "Août - années paires",
+        "august_odd_year": "Août - années impaires",
     }
     options_list = [{"value": "", "label": "Aucune"}]
     options_list.extend(

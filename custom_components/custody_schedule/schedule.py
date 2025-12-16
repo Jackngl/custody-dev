@@ -285,6 +285,32 @@ class CustodyScheduleManager:
                 if start.month != 8 and end.month != 8:
                     continue
                 window_end = min(end, datetime(start.year, 8, 31, tzinfo=start.tzinfo))
+            elif rule == "first_week_even_year":
+                if start.year % 2 == 0:
+                    window_end = min(end, start + timedelta(days=7))
+                else:
+                    continue
+            elif rule == "first_week_odd_year":
+                if start.year % 2 == 1:
+                    window_end = min(end, start + timedelta(days=7))
+                else:
+                    continue
+            elif rule == "second_week_even_year":
+                if start.year % 2 == 0:
+                    window_start = start + timedelta(days=7)
+                    window_end = min(end, window_start + timedelta(days=7))
+                    if window_end <= window_start:
+                        continue
+                else:
+                    continue
+            elif rule == "second_week_odd_year":
+                if start.year % 2 == 1:
+                    window_start = start + timedelta(days=7)
+                    window_end = min(end, window_start + timedelta(days=7))
+                    if window_end <= window_start:
+                        continue
+                else:
+                    continue
             else:
                 window_end = end
 
@@ -372,6 +398,62 @@ class CustodyScheduleManager:
                     start=start, end=end, target_parity=0 if rule == "august_even_weeks" else 1, month=8
                 )
             )
+        elif rule == "july_even_year":
+            # Juillet entier pour les années paires
+            if start.year % 2 == 0:
+                july_start = datetime(start.year, 7, 1, tzinfo=start.tzinfo)
+                july_end = datetime(start.year, 7, 31, 23, 59, 59, tzinfo=start.tzinfo)
+                if july_end >= start and july_start <= end:
+                    windows.append(
+                        CustodyWindow(
+                            start=max(start, july_start),
+                            end=min(end, july_end),
+                            label="Vacances juillet - années paires",
+                            source="summer",
+                        )
+                    )
+        elif rule == "july_odd_year":
+            # Juillet entier pour les années impaires
+            if start.year % 2 == 1:
+                july_start = datetime(start.year, 7, 1, tzinfo=start.tzinfo)
+                july_end = datetime(start.year, 7, 31, 23, 59, 59, tzinfo=start.tzinfo)
+                if july_end >= start and july_start <= end:
+                    windows.append(
+                        CustodyWindow(
+                            start=max(start, july_start),
+                            end=min(end, july_end),
+                            label="Vacances juillet - années impaires",
+                            source="summer",
+                        )
+                    )
+        elif rule == "august_even_year":
+            # Août entier pour les années paires
+            if start.year % 2 == 0:
+                august_start = datetime(start.year, 8, 1, tzinfo=start.tzinfo)
+                august_end = datetime(start.year, 8, 31, 23, 59, 59, tzinfo=start.tzinfo)
+                if august_end >= start and august_start <= end:
+                    windows.append(
+                        CustodyWindow(
+                            start=max(start, august_start),
+                            end=min(end, august_end),
+                            label="Vacances août - années paires",
+                            source="summer",
+                        )
+                    )
+        elif rule == "august_odd_year":
+            # Août entier pour les années impaires
+            if start.year % 2 == 1:
+                august_start = datetime(start.year, 8, 1, tzinfo=start.tzinfo)
+                august_end = datetime(start.year, 8, 31, 23, 59, 59, tzinfo=start.tzinfo)
+                if august_end >= start and august_start <= end:
+                    windows.append(
+                        CustodyWindow(
+                            start=max(start, august_start),
+                            end=min(end, august_end),
+                            label="Vacances août - années impaires",
+                            source="summer",
+                        )
+                    )
         else:
             windows.append(CustodyWindow(start=start, end=end, label=holiday.name, source="summer"))
 
