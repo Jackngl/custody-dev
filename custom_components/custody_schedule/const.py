@@ -16,10 +16,15 @@ PLATFORMS: list[Platform] = [
     Platform.CALENDAR,
 ]
 UPDATE_INTERVAL = timedelta(minutes=15)
+# API du calendrier scolaire français (data.education.gouv.fr)
+# Format année scolaire: "2024-2025" (septembre à juin)
+# Zones: A, B, C, Corse, Guadeloupe, Martinique, Guyane, La Réunion, Mayotte, etc.
 HOLIDAY_API = (
     "https://data.education.gouv.fr/api/records/1.0/search/"
-    "?dataset=fr-en-calendrier-scolaire&refine.annee_scolaire={year}"
+    "?dataset=fr-en-calendrier-scolaire"
+    "&refine.annee_scolaire={year}"
     "&refine.zones={zone}"
+    "&rows=100"
 )
 
 CONF_CHILD_NAME = "child_name"

@@ -31,44 +31,151 @@ class SchoolHolidayClient:
     def __init__(self, hass: HomeAssistant) -> None:
         self._hass = hass
         self._session = aiohttp_client.async_get_clientsession(hass)
-        self._cache: dict[tuple[str, int], list[SchoolHoliday]] = {}
+        self._cache: dict[tuple[str, str], list[SchoolHoliday]] = {}
 
-    async def async_list(self, zone: str, year: int) -> list[SchoolHoliday]:
-        """Return all holidays for the provided zone/year pair."""
-        cache_key = (zone, year)
-        if cache_key in self._cache:
-            return self._cache[cache_key]
+    def _get_school_year(self, date: datetime) -> str:
+        """Convert a calendar date to school year format (e.g., '2024-2025').
+        
+        School year in France runs from September to June.
+        If date is before September, it belongs to the previous school year.
+        """
+        year = date.year
+        # If before September, it's the previous school year
+        if date.month < 9:
+            return f"{year - 1}-{year}"
+        return f"{year}-{year + 1}"
 
-        url = HOLIDAY_API.format(zone=zone, year=year)
-        try:
-            async with self._session.get(url, timeout=aiohttp.ClientTimeout(total=20)) as resp:
-                resp.raise_for_status()
-                payload: dict[str, Any] = await resp.json()
-        except aiohttp.ClientError as err:
-            LOGGER.warning("Failed to fetch school holidays for %s %s: %s", zone, year, err)
-            self._cache[cache_key] = []
-            return []
+    def _normalize_zone(self, zone: str) -> str:
+        """Normalize zone name for API compatibility.
+        
+        The API uses specific zone names. For DOM-TOM, we default to Guadeloupe
+        as it's the most common. Users can configure a specific territory if needed.
+        """
+        zone_mapping = {
+            "Corse": "Corse",
+            "DOM-TOM": "Guadeloupe",  # Default to Guadeloupe for DOM-TOM
+            # Other DOM-TOM territories available: Martinique, Guyane, La Réunion, Mayotte
+        }
+        return zone_mapping.get(zone, zone)
 
-        holidays: list[SchoolHoliday] = []
-        for record in payload.get("records", []):
-            fields = record.get("fields", {})
-            start = dt_util.parse_datetime(fields.get("start_date"))
-            end = dt_util.parse_datetime(fields.get("end_date"))
-            name = fields.get("description", "Vacances scolaires")
-            if not start or not end:
+    async def async_list(self, zone: str, year: int | None = None) -> list[SchoolHoliday]:
+        """Return all holidays for the provided zone.
+        
+        If year is provided, fetches for that calendar year's school year(s).
+        Otherwise, uses current date to determine school year.
+        """
+        now = dt_util.utcnow()
+        if year is None:
+            year = now.year
+        
+        # Get school years that might contain holidays for this calendar year
+        # A calendar year can span two school years (e.g., 2024 spans 2023-2024 and 2024-2025)
+        school_years = set()
+        
+        if year is not None:
+            # For a given calendar year, we need to check:
+            # 1. The school year that started in September of (year-1) and ends in June of year
+            # 2. The school year that starts in September of year and ends in June of (year+1)
+            school_years.add(f"{year - 1}-{year}")
+            school_years.add(f"{year}-{year + 1}")
+        else:
+            # Use current date to determine relevant school years
+            current_school_year = self._get_school_year(now)
+            school_years.add(current_school_year)
+            # Also get next school year to ensure we have summer holidays
+            # Parse current school year to get next one
+            parts = current_school_year.split("-")
+            if len(parts) == 2:
+                next_year_start = int(parts[1])
+                school_years.add(f"{next_year_start}-{next_year_start + 1}")
+
+        normalized_zone = self._normalize_zone(zone)
+        all_holidays: list[SchoolHoliday] = []
+        
+        for school_year in school_years:
+            cache_key = (normalized_zone, school_year)
+            if cache_key in self._cache:
+                all_holidays.extend(self._cache[cache_key])
                 continue
-            holidays.append(
-                SchoolHoliday(
-                    name=name,
-                    zone=zone,
-                    start=dt_util.as_local(start),
-                    end=dt_util.as_local(end),
-                )
-            )
 
-        holidays.sort(key=lambda holiday: holiday.start)
-        self._cache[cache_key] = holidays
-        return holidays
+            url = HOLIDAY_API.format(zone=normalized_zone, year=school_year)
+            try:
+                LOGGER.debug("Fetching school holidays from %s", url)
+                async with self._session.get(url, timeout=aiohttp.ClientTimeout(total=20)) as resp:
+                    resp.raise_for_status()
+                    payload: dict[str, Any] = await resp.json()
+            except aiohttp.ClientError as err:
+                LOGGER.warning(
+                    "Failed to fetch school holidays for zone %s, year %s: %s",
+                    normalized_zone,
+                    school_year,
+                    err,
+                )
+                self._cache[cache_key] = []
+                continue
+            except Exception as err:
+                LOGGER.error(
+                    "Unexpected error fetching school holidays for zone %s, year %s: %s",
+                    normalized_zone,
+                    school_year,
+                    err,
+                )
+                self._cache[cache_key] = []
+                continue
+
+            holidays: list[SchoolHoliday] = []
+            records = payload.get("records", [])
+            LOGGER.debug("Found %d records for zone %s, year %s", len(records), normalized_zone, school_year)
+            
+            for record in records:
+                fields = record.get("fields", {})
+                start_str = fields.get("start_date") or fields.get("date_debut")
+                end_str = fields.get("end_date") or fields.get("date_fin")
+                name = fields.get("description") or fields.get("libelle") or "Vacances scolaires"
+                
+                if not start_str or not end_str:
+                    LOGGER.debug("Skipping record with missing dates: %s", fields)
+                    continue
+                
+                start = dt_util.parse_datetime(start_str)
+                end = dt_util.parse_datetime(end_str)
+                
+                if not start or not end:
+                    LOGGER.debug("Failed to parse dates: start=%s, end=%s", start_str, end_str)
+                    continue
+                
+                # Filter holidays that overlap with the requested calendar year if specified
+                if year is not None:
+                    # Include holidays that:
+                    # - Start or end in the requested year, OR
+                    # - Span across the requested year (start before and end after)
+                    if not (start.year == year or end.year == year or (start.year < year < end.year)):
+                        continue
+                
+                holidays.append(
+                    SchoolHoliday(
+                        name=name,
+                        zone=zone,  # Keep original zone name
+                        start=dt_util.as_local(start),
+                        end=dt_util.as_local(end),
+                    )
+                )
+
+            holidays.sort(key=lambda holiday: holiday.start)
+            self._cache[cache_key] = holidays
+            all_holidays.extend(holidays)
+
+        # Remove duplicates and sort
+        seen = set()
+        unique_holidays = []
+        for holiday in sorted(all_holidays, key=lambda h: (h.start, h.end)):
+            key = (holiday.name, holiday.start, holiday.end)
+            if key not in seen:
+                seen.add(key)
+                unique_holidays.append(holiday)
+
+        LOGGER.debug("Returning %d unique holidays for zone %s", len(unique_holidays), zone)
+        return unique_holidays
 
     def clear(self) -> None:
         """Drop the local cache."""
