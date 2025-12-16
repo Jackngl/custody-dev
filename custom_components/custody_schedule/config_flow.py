@@ -180,9 +180,19 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         mode=selector.SelectSelectorMode.DROPDOWN,
                     )
                 ),
-                vol.Required(CONF_REFERENCE_YEAR, default="even"): vol.In(REFERENCE_YEARS),
-                vol.Required(CONF_START_DAY, default="monday"): vol.In(
-                    ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+                vol.Required(CONF_REFERENCE_YEAR, default="even"): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=REFERENCE_YEARS,
+                        translation_key="reference_year",
+                        mode=selector.SelectSelectorMode.LIST,
+                    )
+                ),
+                vol.Required(CONF_START_DAY, default="monday"): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+                        translation_key="start_day",
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
                 ),
                 vol.Required(CONF_ARRIVAL_TIME, default="08:00"): selector.TimeSelector(),
                 vol.Required(CONF_DEPARTURE_TIME, default="19:00"): selector.TimeSelector(),
