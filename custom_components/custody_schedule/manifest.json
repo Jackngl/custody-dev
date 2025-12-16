@@ -1,7 +1,7 @@
 {
   "domain": "custody_schedule",
   "name": "Custody Schedule",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "after_dependencies": ["calendar"],
   "documentation": "https://github.com/Jackngl/custody-v1",
   "issue_tracker": "https://github.com/Jackngl/custody-v1/issues",
