@@ -65,8 +65,6 @@ class SchoolHolidayClient:
         Otherwise, uses current date to determine school year.
         """
         now = dt_util.utcnow()
-        if year is None:
-            year = now.year
         
         # Get school years that might contain holidays for this calendar year
         # A calendar year can span two school years (e.g., 2024 spans 2023-2024 and 2024-2025)
@@ -79,7 +77,7 @@ class SchoolHolidayClient:
             school_years.add(f"{year - 1}-{year}")
             school_years.add(f"{year}-{year + 1}")
         else:
-            # Use current date to determine relevant school years
+            # Use current date to determine relevant school years directly
             current_school_year = self._get_school_year(now)
             school_years.add(current_school_year)
             # Also get next school year to ensure we have summer holidays
