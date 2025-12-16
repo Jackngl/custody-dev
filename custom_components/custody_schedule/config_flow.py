@@ -268,6 +268,8 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self._data.update(cleaned_input)
                 unique_id = slugify(cleaned_input[CONF_CHILD_NAME])
                 await self.async_set_unique_id(unique_id)
+                # Allow multiple children with different names
+                # Only abort if the exact same child name is already configured
                 self._abort_if_unique_id_configured()
                 return await self.async_step_custody()
 
