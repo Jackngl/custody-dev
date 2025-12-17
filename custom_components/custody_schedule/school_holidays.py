@@ -171,6 +171,7 @@ class SchoolHolidayClient:
                        len(records), zone, normalized_zone, school_year)
             
             # If no records with zone filter, try fetching all and filtering manually
+            # Also handle case where API might not return all holidays (e.g., Zone C winter 2025-2026)
             if len(records) == 0 and normalized_zone in ["A", "B", "C"]:
                 LOGGER.debug("No records with zone filter, trying without filter and filtering manually")
                 url_all = (
@@ -248,6 +249,36 @@ class SchoolHolidayClient:
             if key not in seen:
                 seen.add(key)
                 unique_holidays.append(holiday)
+
+        # Workaround: Add missing Zone C winter holidays 2025-2026 if not found in API
+        # Official calendar: Zone C - Du samedi 21 février au lundi 9 mars 2026
+        # The API sometimes doesn't return all holidays for Zone C
+        if zone == "C":
+            winter_2026_exists = any(
+                h.name == "Vacances d'Hiver" and 
+                h.start.year == 2026 and 
+                h.start.month == 2
+                for h in unique_holidays
+            )
+            if not winter_2026_exists:
+                # Check if we're looking for 2025 or 2026 holidays
+                if year is None or year == 2025 or year == 2026:
+                    # Add Zone C winter holidays 2025-2026
+                    # Use local timezone for consistency
+                    local_tz = dt_util.get_time_zone(str(self._hass.config.time_zone))
+                    winter_start = datetime(2026, 2, 21, 0, 0, tzinfo=local_tz)
+                    winter_end = datetime(2026, 3, 9, 0, 0, tzinfo=local_tz)
+                    unique_holidays.append(
+                        SchoolHoliday(
+                            name="Vacances d'Hiver",
+                            zone="C",
+                            start=winter_start,
+                            end=winter_end,
+                        )
+                    )
+                    LOGGER.warning(
+                        "Added missing Zone C winter holidays 2025-2026 (21/02/2026 -> 09/03/2026) - not found in API"
+                    )
 
         LOGGER.info("Returning %d unique holidays for zone %s", len(unique_holidays), zone)
         return unique_holidays
