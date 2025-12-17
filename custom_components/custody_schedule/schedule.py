@@ -843,12 +843,55 @@ class CustodyScheduleManager:
                 current_vacation = holiday
                 break
         
+        # Get vacation rule to calculate the actual custody window end
+        vacation_rule = (
+            self._config.get(CONF_VACATION_RULE)
+            if self._config.get(CONF_VACATION_RULE) in VACATION_RULES
+            else None
+        )
+        
+        def _calculate_vacation_window_end(holiday_start: datetime, holiday_end: datetime, rule: str | None) -> datetime:
+            """Calculate the actual end of the custody window based on vacation rule."""
+            if not rule:
+                return holiday_end
+            
+            # Apply departure time to holiday_end for accurate midpoint calculation
+            holiday_end_with_time = self._apply_time(holiday_end, self._departure_time)
+            
+            # Calculate based on the rule
+            if rule in ("first_week_even_year", "first_week_odd_year"):
+                # First half: ends at exact midpoint
+                return holiday_start + (holiday_end_with_time - holiday_start) / 2
+            elif rule in ("second_week_even_year", "second_week_odd_year"):
+                # Second half: ends at holiday end (Sunday 19:00)
+                return holiday_end_with_time
+            elif rule == "first_half":
+                # First half: ends at exact midpoint
+                return holiday_start + (holiday_end_with_time - holiday_start) / 2
+            elif rule == "second_half":
+                # Second half: ends at holiday end
+                return holiday_end_with_time
+            elif rule == "first_week":
+                # First week: ends 7 days after start
+                week_end = min(holiday_end_with_time, holiday_start + timedelta(days=7))
+                return self._apply_time(week_end, self._departure_time)
+            elif rule == "second_week":
+                # Second week: starts 7 days after holiday start, ends 7 days later
+                week_start = holiday_start + timedelta(days=7)
+                week_end = min(holiday_end_with_time, week_start + timedelta(days=7))
+                return self._apply_time(week_end, self._departure_time)
+            else:
+                # For other rules (even_weekends, odd_weekends, etc.), return holiday end
+                # as they generate multiple windows
+                return holiday_end_with_time
+        
         if current_vacation:
             # We're in vacation, return current vacation info with adjusted start
+            window_end = _calculate_vacation_window_end(adjusted_start, current_vacation.end, vacation_rule)
             return (
                 current_vacation.name,
                 adjusted_start,
-                current_vacation.end,
+                window_end,
                 0,  # Already in vacation
                 school_holidays_raw,
             )
@@ -874,10 +917,13 @@ class CustodyScheduleManager:
         delta = adjusted_start - now
         days_until = max(0, round(delta.total_seconds() / 86400, 2))
         
+        # Calculate the actual end of the custody window based on vacation rule
+        window_end = _calculate_vacation_window_end(adjusted_start, next_vacation.end, vacation_rule)
+        
         return (
             next_vacation.name,
             adjusted_start,
-            next_vacation.end,
+            window_end,
             days_until,
             school_holidays_raw,
         )
