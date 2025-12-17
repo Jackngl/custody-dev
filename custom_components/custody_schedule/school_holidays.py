@@ -250,9 +250,44 @@ class SchoolHolidayClient:
                 seen.add(key)
                 unique_holidays.append(holiday)
 
-        # Note: The API returns Zone C winter holidays 2025-2026 as 20/02 -> 08/03
-        # Official calendar shows 21/02 -> 09/03, but we use API dates
-        # The dates will be adjusted for primary school level (Friday instead of Saturday) in schedule.py
+        # Manual override for Zone C winter holidays 2025-2026
+        # Official calendar shows 21/02/2026 -> 09/03/2026 (not 20/02 -> 08/03 as API sometimes returns)
+        if normalized_zone == "C":
+            # Check if we need to add or correct winter holidays 2025-2026
+            winter_2026_start = dt_util.parse_datetime("2026-02-21T00:00:00+01:00")
+            winter_2026_end = dt_util.parse_datetime("2026-03-09T23:59:59+01:00")
+            
+            if winter_2026_start and winter_2026_end:
+                winter_2026_start = dt_util.as_local(winter_2026_start)
+                winter_2026_end = dt_util.as_local(winter_2026_end)
+                
+                # Check if winter holidays 2025-2026 are already present
+                has_winter_2026 = False
+                for h in unique_holidays:
+                    if "hiver" in h.name.lower() and h.start.year == 2026 and h.start.month == 2:
+                        has_winter_2026 = True
+                        # Update dates if they're incorrect
+                        if h.start != winter_2026_start or h.end != winter_2026_end:
+                            LOGGER.info("Correcting Zone C winter holidays 2025-2026 dates: %s -> %s / %s -> %s", 
+                                      h.start, winter_2026_start, h.end, winter_2026_end)
+                            h.start = winter_2026_start
+                            h.end = winter_2026_end
+                        break
+                
+                # Add if missing
+                if not has_winter_2026:
+                    LOGGER.info("Adding manual override for Zone C winter holidays 2025-2026: %s -> %s", 
+                              winter_2026_start, winter_2026_end)
+                    unique_holidays.append(
+                        SchoolHoliday(
+                            name="Vacances d'Hiver",
+                            zone=zone,
+                            start=winter_2026_start,
+                            end=winter_2026_end,
+                        )
+                    )
+                    # Re-sort after adding
+                    unique_holidays.sort(key=lambda h: (h.start, h.end))
 
         LOGGER.info("Returning %d unique holidays for zone %s", len(unique_holidays), zone)
         return unique_holidays

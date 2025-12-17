@@ -317,8 +317,12 @@ class CustodyScheduleManager:
             if self._config.get(CONF_VACATION_RULE) in VACATION_RULES
             else None
         )
+        # Get school level for adjusting vacation start dates
+        school_level = self._config.get(CONF_SCHOOL_LEVEL, "primary")
+        
         for holiday in holidays:
-            start = holiday.start
+            # Adjust start date based on school level (Friday for primary, Saturday for middle/high)
+            start = self._adjust_vacation_start(holiday.start, school_level)
             end = holiday.end
             if end < now:
                 continue
@@ -902,8 +906,9 @@ class CustodyScheduleManager:
                 LOGGER.debug("Was Saturday, adjusted to Friday: %s", date_only)
             # Si c'est déjà vendredi (4), on l'utilise directement
             
-            # Créer un nouveau datetime avec la date corrigée et l'heure de départ
-            friday_datetime = datetime.combine(date_only, self._departure_time, official_start.tzinfo)
+            # Créer un nouveau datetime avec la date corrigée et l'heure d'arrivée (vendredi sortie d'école)
+            # Pour les vacances, on utilise l'heure d'arrivée car c'est le moment où l'enfant arrive
+            friday_datetime = datetime.combine(date_only, self._arrival_time, official_start.tzinfo)
             LOGGER.debug("Final adjusted datetime: %s", friday_datetime)
             return friday_datetime
         else:
