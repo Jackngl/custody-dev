@@ -31,7 +31,6 @@ from .const import (
     CONF_SCHOOL_LEVEL,
     CONF_START_DAY,
     CONF_SUMMER_RULE,
-    CONF_VACATION_RULE,
     CONF_ZONE,
     CUSTODY_TYPES,
     DOMAIN,
@@ -40,7 +39,6 @@ from .const import (
     HOLIDAY_API,
     REFERENCE_YEARS,
     SUMMER_RULES,
-    VACATION_RULES,
 )
 
 
@@ -154,25 +152,6 @@ def _start_day_selector() -> selector.SelectSelector:
     options_list = [
         {"value": day, "label": translations.get(day, day)} for day in days
     ]
-    return selector.SelectSelector(
-        selector.SelectSelectorConfig(
-            options=options_list,
-            mode=selector.SelectSelectorMode.DROPDOWN,
-        )
-    )
-
-
-def _vacation_rule_selector() -> selector.SelectSelector:
-    """Create a vacation rule selector with French labels."""
-    translations = {
-        "july": "Juillet complet",
-        "august": "Août complet",
-        "custom": "Personnalisé",
-    }
-    options_list = [{"value": "", "label": "Aucune"}]
-    options_list.extend(
-        [{"value": rule, "label": translations.get(rule, rule)} for rule in VACATION_RULES]
-    )
     return selector.SelectSelector(
         selector.SelectSelectorConfig(
             options=options_list,
@@ -348,15 +327,14 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input:
             cleaned = dict(user_input)
             # Convert empty strings to None for optional fields
-            if cleaned.get(CONF_VACATION_RULE) == "":
-                cleaned[CONF_VACATION_RULE] = None
             if cleaned.get(CONF_SUMMER_RULE) == "":
                 cleaned[CONF_SUMMER_RULE] = None
+            # Remove vacation_rule from data if it exists (legacy)
+            cleaned.pop("vacation_rule", None)
             self._data.update(cleaned)
             return await self.async_step_advanced()
 
         # Use saved data if user goes back, convert None to empty string for selectors
-        vacation_rule_default = self._data.get(CONF_VACATION_RULE) or ""
         summer_rule_default = self._data.get(CONF_SUMMER_RULE) or ""
         # Get reference_year from custody step or default to "even"
         reference_year_default = self._data.get(CONF_REFERENCE_YEAR, "even")
@@ -365,7 +343,6 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             {
                 vol.Required(CONF_ZONE, default=self._data.get(CONF_ZONE, "A")): _zone_selector(),
                 vol.Required(CONF_REFERENCE_YEAR, default=reference_year_default): _reference_year_selector(),
-                vol.Optional(CONF_VACATION_RULE, default=vacation_rule_default): _vacation_rule_selector(),
                 vol.Optional(CONF_SUMMER_RULE, default=summer_rule_default): _summer_rule_selector(),
             }
         )
@@ -536,16 +513,15 @@ class CustodyScheduleOptionsFlow(config_entries.OptionsFlow):
         if user_input:
             cleaned = dict(user_input)
             # Convert empty strings to None for optional fields
-            if cleaned.get(CONF_VACATION_RULE) == "":
-                cleaned[CONF_VACATION_RULE] = None
             if cleaned.get(CONF_SUMMER_RULE) == "":
                 cleaned[CONF_SUMMER_RULE] = None
+            # Remove vacation_rule from data if it exists (legacy)
+            cleaned.pop("vacation_rule", None)
             self._data.update(cleaned)
             return self.async_create_entry(title="", data=self._data)
 
         data = {**self._entry.data, **(self._entry.options or {})}
         # Convert None to empty string for selectors
-        vacation_rule_default = data.get(CONF_VACATION_RULE) or ""
         summer_rule_default = data.get(CONF_SUMMER_RULE) or ""
         # Get reference_year from data or default to "even"
         reference_year_default = data.get(CONF_REFERENCE_YEAR, "even")
@@ -554,7 +530,6 @@ class CustodyScheduleOptionsFlow(config_entries.OptionsFlow):
             {
                 vol.Required(CONF_ZONE, default=data.get(CONF_ZONE, "A")): _zone_selector(),
                 vol.Required(CONF_REFERENCE_YEAR, default=reference_year_default): _reference_year_selector(),
-                vol.Optional(CONF_VACATION_RULE, default=vacation_rule_default): _vacation_rule_selector(),
                 vol.Optional(CONF_SUMMER_RULE, default=summer_rule_default): _summer_rule_selector(),
             }
         )
