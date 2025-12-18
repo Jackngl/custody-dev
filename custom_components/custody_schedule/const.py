@@ -71,27 +71,13 @@ VACATION_RULES = [
     "odd_weekends",
     "july",
     "august",
-    "first_week_even_year",
-    "first_week_odd_year",
-    "second_week_even_year",
-    "second_week_odd_year",
     "custom",
 ]
 SUMMER_RULES = [
-    "summer_half_parity",
     "july_first_half",
     "july_second_half",
-    "july_even_weeks",
-    "july_odd_weeks",
     "august_first_half",
     "august_second_half",
-    "august_even_weeks",
-    "august_odd_weeks",
-    "july_even_year",
-    "july_odd_year",
-    "august_even_year",
-    "august_odd_year",
-    "summer_parity",
 ]
 
 CUSTODY_TYPES = {

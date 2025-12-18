@@ -173,12 +173,8 @@ def _vacation_rule_selector() -> selector.SelectSelector:
         "odd_weeks": "Semaines impaires",
         "even_weekends": "Week-ends semaines paires",
         "odd_weekends": "Week-ends semaines impaires",
-        "july": "Juillet",
-        "august": "Août",
-        "first_week_even_year": "1ère semaine - années paires",
-        "first_week_odd_year": "1ère semaine - années impaires",
-        "second_week_even_year": "2ème semaine - années paires",
-        "second_week_odd_year": "2ème semaine - années impaires",
+        "july": "Juillet complet (selon année paire/impaire)",
+        "august": "Août complet (selon année paire/impaire)",
         "custom": "Personnalisé",
     }
     options_list = [{"value": "", "label": "Aucune"}]
@@ -196,19 +192,10 @@ def _vacation_rule_selector() -> selector.SelectSelector:
 def _summer_rule_selector() -> selector.SelectSelector:
     """Create a summer rule selector with French labels."""
     translations = {
-        "summer_half_parity": "Été - moitié selon année (impair: 1ère / pair: 2ème)",
-        "july_first_half": "Juillet - 1ère moitié",
-        "july_second_half": "Juillet - 2ème moitié",
-        "july_even_weeks": "Juillet - semaines paires",
-        "july_odd_weeks": "Juillet - semaines impaires",
-        "august_first_half": "Août - 1ère moitié",
-        "august_second_half": "Août - 2ème moitié",
-        "august_even_weeks": "Août - semaines paires",
-        "august_odd_weeks": "Août - semaines impaires",
-        "july_even_year": "Juillet - années paires",
-        "july_odd_year": "Juillet - années impaires",
-        "august_even_year": "Août - années paires",
-        "august_odd_year": "Août - années impaires",
+        "july_first_half": "Juillet - 1ère moitié (1-15 juillet)",
+        "july_second_half": "Juillet - 2ème moitié (16-31 juillet)",
+        "august_first_half": "Août - 1ère moitié (1-15 août)",
+        "august_second_half": "Août - 2ème moitié (16-31 août)",
     }
     options_list = [{"value": "", "label": "Aucune"}]
     options_list.extend(
