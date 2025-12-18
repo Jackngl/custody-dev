@@ -90,6 +90,7 @@ SUMMER_RULES = [
     "july_odd_year",
     "august_even_year",
     "august_odd_year",
+    "summer_parity",
 ]
 
 CUSTODY_TYPES = {

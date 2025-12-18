@@ -352,138 +352,116 @@ class CustodyScheduleManager:
             # Adjust start date based on school level (Friday for primary, Saturday for middle/high)
             start = self._adjust_vacation_start(holiday.start, school_level)
             end = holiday.end
-            if end < now:
+            
+            # Midpoint is calculated on official dates from API
+            midpoint = holiday.start + (holiday.end - holiday.start) / 2
+            
+            # End is Sunday at departure_time if API says Monday
+            forced_end = self._force_vacation_end(holiday.end)
+            
+            if forced_end < now:
                 continue
+            
             applied = False
             if summer_rule and summer_rule in SUMMER_RULES and self._is_summer_break(holiday):
                 windows.extend(self._summer_windows(holiday, summer_rule))
                 applied = True
+            
             if not rule or applied:
                 continue
 
             # Apply arrival/departure times to vacation windows
-            # For most rules, we use the configured arrival/departure times
             window_start = start
+            window_end = forced_end
+            
             if rule == "first_week":
                 window_start = self._apply_time(start, self._arrival_time)
-                window_end = min(end, start + timedelta(days=7))
+                window_end = min(forced_end, start + timedelta(days=7))
                 window_end = self._apply_time(window_end, self._departure_time)
             elif rule == "second_week":
                 window_start = start + timedelta(days=7)
                 window_start = self._apply_time(window_start, self._arrival_time)
-                window_end = min(end, window_start + timedelta(days=7))
+                window_end = min(forced_end, window_start + timedelta(days=7))
                 window_end = self._apply_time(window_end, self._departure_time)
             elif rule == "first_half":
                 window_start = self._apply_time(start, self._arrival_time)
-                window_end = start + (end - start) / 2
-                window_end = self._apply_time(window_end, self._departure_time)
+                window_end = midpoint
             elif rule == "second_half":
-                window_start = start + (end - start) / 2
-                window_start = self._apply_time(window_start, self._arrival_time)
-                window_end = self._apply_time(end, self._departure_time)
+                window_start = midpoint
+                window_end = forced_end
             elif rule == "even_weeks":
                 window_start = start
                 if int(start.strftime("%U")) % 2 != 0:
                     window_start = start + timedelta(days=7)
                 window_start = self._apply_time(window_start, self._arrival_time)
-                window_end = min(end, window_start + timedelta(days=7))
+                window_end = min(forced_end, window_start + timedelta(days=7))
                 window_end = self._apply_time(window_end, self._departure_time)
             elif rule == "odd_weeks":
                 window_start = start
                 if int(start.strftime("%U")) % 2 == 0:
                     window_start = start + timedelta(days=7)
                 window_start = self._apply_time(window_start, self._arrival_time)
-                window_end = min(end, window_start + timedelta(days=7))
+                window_end = min(forced_end, window_start + timedelta(days=7))
                 window_end = self._apply_time(window_end, self._departure_time)
             elif rule == "even_weekends":
-                # Week-ends des semaines paires (samedi-dimanche)
-                # Trouver le samedi de la semaine de début
-                # (5 - start.weekday()) % 7 calcule correctement :
-                # - 0 si samedi (ce samedi)
-                # - 1-5 si lundi-vendredi (samedi de cette semaine)
-                # - 6 si dimanche (samedi de la semaine suivante)
+                # ... weekends logic ...
                 days_until_saturday = (5 - start.weekday()) % 7
                 saturday = start + timedelta(days=days_until_saturday)
-                # Use isocalendar() for reliable week number (ISO week: Monday=1, Sunday=7)
-                # Get the ISO week number and check parity
                 _, iso_week, _ = saturday.isocalendar()
-                # Si la semaine ISO du samedi est impaire, passer à la semaine suivante
                 if iso_week % 2 != 0:
                     saturday += timedelta(days=7)
                 sunday = saturday + timedelta(days=1)
                 window_start = self._apply_time(saturday, self._arrival_time)
-                window_end = min(end, self._apply_time(sunday, self._departure_time))
+                window_end = min(forced_end, self._apply_time(sunday, self._departure_time))
             elif rule == "odd_weekends":
-                # Week-ends des semaines impaires (samedi-dimanche)
-                # Trouver le samedi de la semaine de début
-                # (5 - start.weekday()) % 7 calcule correctement :
-                # - 0 si samedi (ce samedi)
-                # - 1-5 si lundi-vendredi (samedi de cette semaine)
-                # - 6 si dimanche (samedi de la semaine suivante)
+                # ... weekends logic ...
                 days_until_saturday = (5 - start.weekday()) % 7
                 saturday = start + timedelta(days=days_until_saturday)
-                # Use isocalendar() for reliable week number (ISO week: Monday=1, Sunday=7)
-                # Get the ISO week number and check parity
                 _, iso_week, _ = saturday.isocalendar()
-                # Si la semaine ISO du samedi est paire, passer à la semaine suivante
                 if iso_week % 2 == 0:
                     saturday += timedelta(days=7)
                 sunday = saturday + timedelta(days=1)
                 window_start = self._apply_time(saturday, self._arrival_time)
-                window_end = min(end, self._apply_time(sunday, self._departure_time))
+                window_end = min(forced_end, self._apply_time(sunday, self._departure_time))
             elif rule == "july":
                 if start.month != 7 and end.month != 7:
                     continue
                 window_start = self._apply_time(start, self._arrival_time)
-                window_end = min(end, datetime(start.year, 7, 31, tzinfo=start.tzinfo))
+                window_end = min(forced_end, datetime(start.year, 7, 31, tzinfo=start.tzinfo))
                 window_end = self._apply_time(window_end, self._departure_time)
             elif rule == "august":
                 if start.month != 8 and end.month != 8:
                     continue
                 window_start = self._apply_time(start, self._arrival_time)
-                window_end = min(end, datetime(start.year, 8, 31, tzinfo=start.tzinfo))
+                window_end = min(forced_end, datetime(start.year, 8, 31, tzinfo=start.tzinfo))
                 window_end = self._apply_time(window_end, self._departure_time)
             elif rule == "first_week_even_year":
                 if start.year % 2 == 0:
-                    # Use first half with exact midpoint time (not departure time)
                     window_start = self._apply_time(start, self._arrival_time)
-                    window_end = start + (end - start) / 2
-                    # Keep exact midpoint time, don't apply departure_time
+                    window_end = midpoint
                 else:
                     continue
             elif rule == "first_week_odd_year":
                 if start.year % 2 == 1:
-                    # Use first half with exact midpoint time (not departure time)
                     window_start = self._apply_time(start, self._arrival_time)
-                    window_end = start + (end - start) / 2
-                    # Keep exact midpoint time, don't apply departure_time
+                    window_end = midpoint
                 else:
                     continue
             elif rule == "second_week_even_year":
                 if start.year % 2 == 0:
-                    # Use second half: starts at exact midpoint, ends at Sunday 19:00
-                    window_start = start + (end - start) / 2
-                    window_start = self._apply_time(window_start, self._arrival_time)
-                    # End is always Sunday at departure_time (19:00) for vacation sharing
-                    window_end = self._apply_time(end, self._departure_time)
-                    if window_end <= window_start:
-                        continue
+                    window_start = midpoint
+                    window_end = forced_end
                 else:
                     continue
             elif rule == "second_week_odd_year":
                 if start.year % 2 == 1:
-                    # Use second half: starts at exact midpoint, ends at Sunday 19:00
-                    window_start = start + (end - start) / 2
-                    window_start = self._apply_time(window_start, self._arrival_time)
-                    # End is always Sunday at departure_time (19:00) for vacation sharing
-                    window_end = self._apply_time(end, self._departure_time)
-                    if window_end <= window_start:
-                        continue
+                    window_start = midpoint
+                    window_end = forced_end
                 else:
                     continue
             else:
                 window_start = self._apply_time(start, self._arrival_time)
-                window_end = self._apply_time(end, self._departure_time)
+                window_end = forced_end
 
             if window_end <= window_start:
                 continue
@@ -523,12 +501,13 @@ class CustodyScheduleManager:
         start = holiday.start
         end = holiday.end
         windows: list[CustodyWindow] = []
+        is_even_year = start.year % 2 == 0
 
         if rule == "july_first_half":
-            window_end = min(end, datetime(start.year, 7, 31, tzinfo=start.tzinfo))
+            window_end = datetime(start.year, 7, 15, 23, 59, 59, tzinfo=start.tzinfo)
             windows.append(
                 CustodyWindow(
-                    start=start,
+                    start=self._apply_time(max(start, datetime(start.year, 7, 1, tzinfo=start.tzinfo)), self._arrival_time),
                     end=window_end,
                     label="Vacances scolaires - Juillet (1ère moitié)",
                     source="summer",
@@ -538,23 +517,18 @@ class CustodyScheduleManager:
             window_start = datetime(start.year, 7, 16, tzinfo=start.tzinfo)
             windows.append(
                 CustodyWindow(
-                    start=window_start,
-                    end=datetime(start.year, 7, 31, tzinfo=start.tzinfo),
+                    start=self._apply_time(window_start, self._arrival_time),
+                    end=self._apply_time(datetime(start.year, 7, 31, tzinfo=start.tzinfo), self._departure_time),
                     label="Vacances scolaires - Juillet (2ème moitié)",
                     source="summer",
                 )
             )
-        elif rule in ("july_even_weeks", "july_odd_weeks"):
-            windows.extend(
-                self._summer_week_parity_windows(
-                    start=start, end=end, target_parity=0 if rule == "july_even_weeks" else 1, month=7
-                )
-            )
         elif rule == "august_first_half":
-            window_end = datetime(start.year, 8, 15, tzinfo=start.tzinfo)
+            window_start = datetime(start.year, 8, 1, tzinfo=start.tzinfo)
+            window_end = datetime(start.year, 8, 15, 23, 59, 59, tzinfo=start.tzinfo)
             windows.append(
                 CustodyWindow(
-                    start=datetime(start.year, 8, 1, tzinfo=start.tzinfo),
+                    start=self._apply_time(window_start, self._arrival_time),
                     end=window_end,
                     label="Vacances scolaires - Août (1ère moitié)",
                     source="summer",
@@ -564,13 +538,66 @@ class CustodyScheduleManager:
             window_start = datetime(start.year, 8, 16, tzinfo=start.tzinfo)
             windows.append(
                 CustodyWindow(
-                    start=window_start,
-                    end=min(end, datetime(start.year, 8, 31, tzinfo=start.tzinfo)),
+                    start=self._apply_time(window_start, self._arrival_time),
+                    end=self._force_vacation_end(min(end, datetime(start.year, 8, 31, tzinfo=start.tzinfo))),
                     label="Vacances scolaires - Août (2ème moitié)",
                     source="summer",
                 )
             )
-        elif rule in ("august_even_weeks", "august_odd_weeks"):
+        elif rule == "summer_parity":
+            # Odd year: 1st half of July AND 1st half of August
+            # Even year: 2nd half of July AND 2nd half of August
+            if not is_even_year:
+                # 1st half July
+                j_start = datetime(start.year, 7, 1, tzinfo=start.tzinfo)
+                j_end = datetime(start.year, 7, 15, 23, 59, 59, tzinfo=start.tzinfo)
+                if j_end >= start and j_start <= end:
+                    windows.append(
+                        CustodyWindow(
+                            start=self._apply_time(max(start, j_start), self._arrival_time),
+                            end=j_end,
+                            label="Vacances scolaires - Juillet (1ère moitié)",
+                            source="summer",
+                        )
+                    )
+                # 1st half August
+                a_start = datetime(start.year, 8, 1, tzinfo=start.tzinfo)
+                a_end = datetime(start.year, 8, 15, 23, 59, 59, tzinfo=start.tzinfo)
+                if a_end >= start and a_start <= end:
+                    windows.append(
+                        CustodyWindow(
+                            start=self._apply_time(max(start, a_start), self._arrival_time),
+                            end=a_end,
+                            label="Vacances scolaires - Août (1ère moitié)",
+                            source="summer",
+                        )
+                    )
+            else:
+                # 2nd half July
+                j_start = datetime(start.year, 7, 16, tzinfo=start.tzinfo)
+                j_end = datetime(start.year, 7, 31, 23, 59, 59, tzinfo=start.tzinfo)
+                if j_end >= start and j_start <= end:
+                    windows.append(
+                        CustodyWindow(
+                            start=self._apply_time(max(start, j_start), self._arrival_time),
+                            end=self._apply_time(j_end, self._departure_time),
+                            label="Vacances scolaires - Juillet (2ème moitié)",
+                            source="summer",
+                        )
+                    )
+                # 2nd half August
+                a_start = datetime(start.year, 8, 16, tzinfo=start.tzinfo)
+                a_end = datetime(start.year, 8, 31, 23, 59, 59, tzinfo=start.tzinfo)
+                if a_end >= start and a_start <= end:
+                    windows.append(
+                        CustodyWindow(
+                            start=self._apply_time(max(start, a_start), self._arrival_time),
+                            end=self._force_vacation_end(min(end, a_end)),
+                            label="Vacances scolaires - Août (2ème moitié)",
+                            source="summer",
+                        )
+                    )
+        elif rule in ("july_even_weeks", "july_odd_weeks"):
             windows.extend(
                 self._summer_week_parity_windows(
                     start=start, end=end, target_parity=0 if rule == "august_even_weeks" else 1, month=8
@@ -880,46 +907,31 @@ class CustodyScheduleManager:
         def _calculate_vacation_window_end(holiday_start: datetime, holiday_end: datetime, rule: str | None) -> datetime:
             """Calculate the actual end of the custody window based on vacation rule."""
             if not rule:
-                return holiday_end
+                return self._force_vacation_end(holiday_end)
             
-            # Apply departure time to holiday_end for accurate midpoint calculation
-            # If holiday_end is at midnight, it's likely the day after the actual end
-            # For vacations, the end is typically a Sunday at departure time
-            # If holiday_end is Monday 00:00, it means the vacation ended on Sunday
-            if holiday_end.hour == 0 and holiday_end.minute == 0:
-                # It's at midnight, likely the day after the actual end
-                # Use the previous day (Sunday) with departure time
-                holiday_end_date = holiday_end.date() - timedelta(days=1)
-                holiday_end_with_time = datetime.combine(holiday_end_date, self._departure_time, holiday_end.tzinfo)
-            else:
-                holiday_end_with_time = self._apply_time(holiday_end, self._departure_time)
+            # Midpoint is calculated on official dates from API
+            midpoint = holiday_start + (holiday_end - holiday_start) / 2
+            forced_end = self._force_vacation_end(holiday_end)
             
             # Calculate based on the rule
-            if rule in ("first_week_even_year", "first_week_odd_year"):
+            if rule in ("first_week_even_year", "first_week_odd_year", "first_half"):
                 # First half: ends at exact midpoint
-                return holiday_start + (holiday_end_with_time - holiday_start) / 2
-            elif rule in ("second_week_even_year", "second_week_odd_year"):
-                # Second half: ends at holiday end (Sunday 19:00)
-                return holiday_end_with_time
-            elif rule == "first_half":
-                # First half: ends at exact midpoint
-                return holiday_start + (holiday_end_with_time - holiday_start) / 2
-            elif rule == "second_half":
-                # Second half: ends at holiday end
-                return holiday_end_with_time
+                return midpoint
+            elif rule in ("second_week_even_year", "second_week_odd_year", "second_half"):
+                # Second half: ends at forced Sunday end
+                return forced_end
             elif rule == "first_week":
                 # First week: ends 7 days after start
-                week_end = min(holiday_end_with_time, holiday_start + timedelta(days=7))
+                week_end = min(forced_end, holiday_start + timedelta(days=7))
                 return self._apply_time(week_end, self._departure_time)
             elif rule == "second_week":
                 # Second week: starts 7 days after holiday start, ends 7 days later
                 week_start = holiday_start + timedelta(days=7)
-                week_end = min(holiday_end_with_time, week_start + timedelta(days=7))
+                week_end = min(forced_end, week_start + timedelta(days=7))
                 return self._apply_time(week_end, self._departure_time)
             else:
-                # For other rules (even_weekends, odd_weekends, etc.), return holiday end
-                # as they generate multiple windows
-                return holiday_end_with_time
+                # For other rules (even_weekends, odd_weekends, etc.), return forced end
+                return forced_end
         
         if current_vacation:
             # We're in vacation, return current vacation info with adjusted start
@@ -1018,6 +1030,24 @@ class CustodyScheduleManager:
                     days_to_saturday = 7
                 saturday = official_start + timedelta(days=days_to_saturday)
             return self._apply_time(saturday, self._arrival_time)
+
+    def _force_vacation_end(self, official_end: datetime) -> datetime:
+        """Force the vacation end to Sunday 19:00 if it falls on a Monday (school resume)."""
+        # API end is usually Monday 00:00 (which is Sunday night)
+        # If it's Monday 00:00, move to Sunday departure_time
+        if official_end.weekday() == 0 and official_end.hour == 0 and official_end.minute == 0:
+            sunday = official_end - timedelta(days=1)
+            return self._apply_time(sunday, self._departure_time)
+        
+        # Also handle cases where it might be Monday at some other time or Sunday at 00:00
+        # The key is: if the vacation ends at the start of a Monday, custody ends Sunday evening
+        if official_end.weekday() == 0: # Monday
+            sunday = official_end - timedelta(days=official_end.weekday() + 1 if official_end.weekday() < 6 else 0)
+            # Actually, just get the Sunday before this Monday
+            sunday = official_end - timedelta(days=1)
+            return self._apply_time(sunday, self._departure_time)
+            
+        return self._apply_time(official_end, self._departure_time)
 
     def _evaluate_override(self, now: datetime) -> bool | None:
         """Return override state if active."""

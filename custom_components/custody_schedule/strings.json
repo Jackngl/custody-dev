@@ -136,7 +136,8 @@
       "july_even_year": "Juillet - années paires",
       "july_odd_year": "Juillet - années impaires",
       "august_even_year": "Août - années paires",
-      "august_odd_year": "Août - années impaires"
+      "august_odd_year": "Août - années impaires",
+      "summer_parity": "Parité année (Juillet/Août)"
     },
     "reference_year": {
       "even": "Paire",
