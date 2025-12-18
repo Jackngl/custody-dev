@@ -1,7 +1,7 @@
 # 👨‍👩‍👧‍👦 Planning de garde (Custody Schedule)
 
 ![Version](https://img.shields.io/badge/version-1.0.65-blue.svg)
-![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.1%2B-green.svg)
+![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2025.12-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-yellow.svg)
 
 Intégration Home Assistant pour planifier facilement les gardes alternées, suivre les périodes en cours et automatiser la maison (chauffage, notifications, dashboard…).
