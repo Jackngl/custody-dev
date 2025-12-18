@@ -96,30 +96,20 @@ SUMMER_RULES = [
 
 CUSTODY_TYPES = {
     "alternate_week": {
-        "label": "Alternating Weeks",
+        "label": "Semaines alternées (1/1)",
         "cycle_days": 14,
         "pattern": [
             {"days": 7, "state": "on"},
             {"days": 7, "state": "off"},
         ],
     },
-    "alternate_week_even": {
-        "label": "Semaines alternées - semaines paires",
+    "alternate_week_parity": {
+        "label": "Semaines alternées",
         "cycle_days": 7,
         "pattern": [],
     },
-    "alternate_week_odd": {
-        "label": "Semaines alternées - semaines impaires",
-        "cycle_days": 7,
-        "pattern": [],
-    },
-    "even_weekends": {
-        "label": "Week-ends semaines paires",
-        "cycle_days": 7,
-        "pattern": [],
-    },
-    "odd_weekends": {
-        "label": "Week-ends semaines impaires",
+    "alternate_weekend": {
+        "label": "Week-ends alternés",
         "cycle_days": 7,
         "pattern": [],
     },

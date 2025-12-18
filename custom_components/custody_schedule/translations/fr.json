@@ -88,10 +88,8 @@
   "selector": {
     "custody_type": {
       "alternate_week": "Semaines alternées (1/1)",
-      "alternate_week_even": "Semaines alternées - semaines paires",
-      "alternate_week_odd": "Semaines alternées - semaines impaires",
-      "even_weekends": "Week-ends semaines paires",
-      "odd_weekends": "Week-ends semaines impaires",
+      "alternate_week_parity": "Semaines alternées",
+      "alternate_weekend": "Week-ends alternés",
       "two_two_three": "2-2-3",
       "two_two_five_five": "2-2-5-5",
       "custom": "Personnalisé"

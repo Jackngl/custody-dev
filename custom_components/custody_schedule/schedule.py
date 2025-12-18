@@ -341,19 +341,21 @@ class CustodyScheduleManager:
         horizon = now + timedelta(days=90)
 
         # Cas particulier : week-ends basés sur la parité ISO des semaines
-        if custody_type in ("even_weekends", "odd_weekends"):
+        if custody_type == "alternate_weekend":
             windows: list[CustodyWindow] = []
             pointer = self._reference_start(now, custody_type)
             
             # Get French holidays for current and next year
             holidays = get_french_holidays(now.year) | get_french_holidays(now.year + 1)
             
+            # Get reference_year to determine parity (even = even weeks, odd = odd weeks)
+            reference_year = self._config.get(CONF_REFERENCE_YEAR, "even")
+            target_parity = 0 if reference_year == "even" else 1  # 0 = even, 1 = odd
+            
             while pointer < horizon:
                 iso_week = pointer.isocalendar().week
-                is_even = iso_week % 2 == 0
-                if (custody_type == "even_weekends" and is_even) or (
-                    custody_type == "odd_weekends" and not is_even
-                ):
+                week_parity = iso_week % 2  # 0 = even, 1 = odd
+                if week_parity == target_parity:
                     # Weekend: Friday 16:15 -> Sunday 19:00
                     # pointer is Monday of the week, so:
                     # Friday = pointer + 4, Saturday = pointer + 5, Sunday = pointer + 6
@@ -404,19 +406,21 @@ class CustodyScheduleManager:
             return windows
 
         # Cas particulier : semaines alternées basées sur la parité ISO des semaines
-        if custody_type in ("alternate_week_even", "alternate_week_odd"):
+        if custody_type == "alternate_week_parity":
             windows: list[CustodyWindow] = []
             pointer = self._reference_start(now, custody_type)
             
             # Get French holidays for current and next year
             holidays = get_french_holidays(now.year) | get_french_holidays(now.year + 1)
             
+            # Get reference_year to determine parity (even = even weeks, odd = odd weeks)
+            reference_year = self._config.get(CONF_REFERENCE_YEAR, "even")
+            target_parity = 0 if reference_year == "even" else 1  # 0 = even, 1 = odd
+            
             while pointer < horizon:
                 iso_week = pointer.isocalendar().week
-                is_even = iso_week % 2 == 0
-                if (custody_type == "alternate_week_even" and is_even) or (
-                    custody_type == "alternate_week_odd" and not is_even
-                ):
+                week_parity = iso_week % 2  # 0 = even, 1 = odd
+                if week_parity == target_parity:
                     # Week: Monday to Sunday (7 days)
                     monday = pointer
                     sunday = pointer + timedelta(days=6)
@@ -873,11 +877,9 @@ class CustodyScheduleManager:
         elif desired == "odd" and reference_year % 2 == 0:
             reference_year -= 1
 
-        if custody_type in ("even_weekends", "odd_weekends"):
-            target_parity = 0 if custody_type == "even_weekends" else 1
-            base = self._first_monday_with_week_parity(reference_year, target_parity)
-        elif custody_type in ("alternate_week_even", "alternate_week_odd"):
-            target_parity = 0 if custody_type == "alternate_week_even" else 1
+        if custody_type in ("alternate_weekend", "alternate_week_parity"):
+            # Use reference_year to determine parity (even = even weeks, odd = odd weeks)
+            target_parity = 0 if desired == "even" else 1
             base = self._first_monday_with_week_parity(reference_year, target_parity)
         else:
             base = datetime(reference_year, 1, 1, tzinfo=self._tz)
