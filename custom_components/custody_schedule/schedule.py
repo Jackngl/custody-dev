@@ -3,11 +3,58 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, time, timedelta
+from datetime import datetime, date, time, timedelta
 from typing import Any, Iterable
 
 from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
+
+
+def _easter_date(year: int) -> date:
+    """Calculate Easter Sunday date using the Anonymous Gregorian algorithm."""
+    a = year % 19
+    b = year // 100
+    c = year % 100
+    d = b // 4
+    e = b % 4
+    f = (b + 8) // 25
+    g = (b - f + 1) // 3
+    h = (19 * a + b - d - g + 15) % 30
+    i = c // 4
+    k = c % 4
+    l = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * l) // 451
+    month = (h + l - 7 * m + 114) // 31
+    day = ((h + l - 7 * m + 114) % 31) + 1
+    return date(year, month, day)
+
+
+def get_french_holidays(year: int) -> set[date]:
+    """Return set of French public holidays for a given year.
+    
+    These are the official jours fériés in France:
+    - Fixed dates: Jan 1, May 1, May 8, Jul 14, Aug 15, Nov 1, Nov 11, Dec 25
+    - Variable dates: Easter Monday, Ascension Thursday, Whit Monday
+    """
+    holidays = set()
+    
+    # Fixed holidays
+    holidays.add(date(year, 1, 1))    # Jour de l'An
+    holidays.add(date(year, 5, 1))    # Fête du Travail
+    holidays.add(date(year, 5, 8))    # Victoire 1945
+    holidays.add(date(year, 7, 14))   # Fête Nationale
+    holidays.add(date(year, 8, 15))   # Assomption
+    holidays.add(date(year, 11, 1))   # Toussaint
+    holidays.add(date(year, 11, 11))  # Armistice
+    holidays.add(date(year, 12, 25))  # Noël
+    
+    # Variable holidays based on Easter
+    easter = _easter_date(year)
+    holidays.add(easter + timedelta(days=1))   # Lundi de Pâques
+    holidays.add(easter + timedelta(days=39))  # Jeudi de l'Ascension
+    holidays.add(easter + timedelta(days=50))  # Lundi de Pentecôte
+    
+    return holidays
 
 from .const import (
     ATTR_LOCATION,
@@ -270,21 +317,50 @@ class CustodyScheduleManager:
         if custody_type in ("even_weekends", "odd_weekends"):
             windows: list[CustodyWindow] = []
             pointer = self._reference_start(now, custody_type)
+            
+            # Get French holidays for current and next year
+            holidays = get_french_holidays(now.year) | get_french_holidays(now.year + 1)
+            
             while pointer < horizon:
                 iso_week = pointer.isocalendar().week
                 is_even = iso_week % 2 == 0
                 if (custody_type == "even_weekends" and is_even) or (
                     custody_type == "odd_weekends" and not is_even
                 ):
-                    saturday = pointer + timedelta(days=5)
-                    sunday = pointer + timedelta(days=7)
+                    # Weekend: Friday 16:15 -> Sunday 19:00
+                    # pointer is Monday of the week, so:
+                    # Friday = pointer + 4, Saturday = pointer + 5, Sunday = pointer + 6
+                    friday = pointer + timedelta(days=4)
+                    sunday = pointer + timedelta(days=6)
+                    monday = pointer + timedelta(days=7)
+                    thursday = pointer + timedelta(days=3)
+                    
+                    # Default start/end
+                    window_start = friday
+                    window_end = sunday
+                    label_suffix = ""
+                    
+                    # Check for public holidays that extend the weekend
+                    friday_is_holiday = friday.date() in holidays
+                    monday_is_holiday = monday.date() in holidays
+                    
+                    if friday_is_holiday:
+                        # Vendredi férié: start Thursday instead
+                        window_start = thursday
+                        label_suffix = " + Vendredi férié"
+                    
+                    if monday_is_holiday:
+                        # Lundi férié: extend to Monday
+                        window_end = monday
+                        label_suffix = " + Lundi férié" if not label_suffix else " + Pont"
+                    
                     # Get label from custody type definition
                     type_label = CUSTODY_TYPES.get(custody_type, {}).get("label", "Garde")
                     windows.append(
                         CustodyWindow(
-                            start=self._apply_time(saturday, self._arrival_time),
-                            end=self._apply_time(sunday, self._departure_time),
-                            label=f"Garde - {type_label}",
+                            start=self._apply_time(window_start, self._arrival_time),
+                            end=self._apply_time(window_end, self._departure_time),
+                            label=f"Garde - {type_label}{label_suffix}",
                             source="pattern",
                         )
                     )
@@ -295,6 +371,9 @@ class CustodyScheduleManager:
         pattern = type_def["pattern"]
         windows: list[CustodyWindow] = []
         reference_start = self._reference_start(now, custody_type)
+        
+        # Get French holidays for current and next year
+        holidays = get_french_holidays(now.year) | get_french_holidays(now.year + 1)
         
         # For alternate_weekend, _reference_start returns the Friday that starts the "on" period
         # But the pattern starts with "off" period, so we need to go back 12 days
@@ -316,13 +395,38 @@ class CustodyScheduleManager:
                     # For other cases: if segment is N days, it spans from day 0 to day N-1
                     segment_end = segment_start + timedelta(days=segment["days"] - 1)
                 if segment["state"] == "on":
+                    # Check for public holidays that extend the weekend
+                    window_start = segment_start
+                    window_end = segment_end
+                    label_suffix = ""
+                    
+                    # For weekend custody types, check for holidays
+                    if custody_type in ("alternate_weekend",):
+                        friday = segment_start
+                        sunday = segment_end
+                        monday = sunday + timedelta(days=1)
+                        thursday = friday - timedelta(days=1)
+                        
+                        friday_is_holiday = friday.date() in holidays
+                        monday_is_holiday = monday.date() in holidays
+                        
+                        if friday_is_holiday:
+                            # Vendredi férié: start Thursday instead
+                            window_start = thursday
+                            label_suffix = " + Vendredi férié"
+                        
+                        if monday_is_holiday:
+                            # Lundi férié: extend to Monday
+                            window_end = monday
+                            label_suffix = " + Lundi férié" if not label_suffix else " + Pont"
+                    
                     # Get label from custody type definition
                     type_label = CUSTODY_TYPES.get(custody_type, {}).get("label", "Garde")
                     windows.append(
                         CustodyWindow(
-                            start=self._apply_time(segment_start, self._arrival_time),
-                            end=self._apply_time(segment_end, self._departure_time),
-                            label=f"Garde - {type_label}",
+                            start=self._apply_time(window_start, self._arrival_time),
+                            end=self._apply_time(window_end, self._departure_time),
+                            label=f"Garde - {type_label}{label_suffix}",
                             source="pattern",
                         )
                     )
