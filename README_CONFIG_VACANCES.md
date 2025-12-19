@@ -154,13 +154,15 @@ L'application utilise un **système automatique** basé sur le champ `reference_
 
 ### Exemples
 
-**Configuration** : `reference_year: "odd"` (impaire)
-- **2025 (impaire)** : ✅ Vous avez la 1ère partie (1ère semaine, 1ère moitié, Juillet)
-- **2026 (paire)** : ❌ Pas de garde (car c'est la 2ème partie, l'autre parent a la garde)
+**Configuration Parent A** : `reference_year: "odd"` (impaire)
+- **2025 (impaire)** : ✅ Parent A a la 1ère partie (1ère semaine, 1ère moitié, Juillet)
+- **2026 (paire)** : ❌ Pas de garde (car c'est la 2ème partie, le parent B a la garde)
 
-**Configuration** : `reference_year: "even"` (paire)
-- **2024 (paire)** : ✅ Vous avez la 2ème partie (2ème semaine, 2ème moitié, Août)
-- **2025 (impaire)** : ❌ Pas de garde (car c'est la 1ère partie, l'autre parent a la garde)
+**Configuration Parent B** : `reference_year: "even"` (paire)
+- **2024 (paire)** : ✅ Parent B a la 2ème partie (2ème semaine, 2ème moitié, Août)
+- **2025 (impaire)** : ❌ Pas de garde (car c'est la 1ère partie, le parent A a la garde)
+
+> **Note** : Les deux parents ont des configurations complémentaires. Par exemple, en 2025 (année impaire), le parent A a la 1ère partie et le parent B n'a pas de garde. En 2026 (année paire), le parent B a la 2ème partie et le parent A n'a pas de garde.
 
 ### Règles spéciales pour l'été (quinzaines)
 
