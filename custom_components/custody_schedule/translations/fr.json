@@ -69,7 +69,7 @@
         "description": "Modifier la zone scolaire (API) et les règles pendant les vacances.",
         "data": {
           "zone": "Zone scolaire",
-          "vacation_rule": "Règle vacances",
+          "reference_year": "Année de référence (paire/impaire)",
           "summer_rule": "Règle grandes vacances"
         }
       },

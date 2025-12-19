@@ -1,10 +1,6 @@
 # 👨‍👩‍👧‍👦 Planning de garde (Custody Schedule)
 
-<<<<<<< HEAD
 ![Version](https://img.shields.io/badge/version-1.0.67-blue.svg)
-=======
-![Version](https://img.shields.io/badge/version-1.0.65-blue.svg)
->>>>>>> bca31b6 (Remove vacation_rule field from UI, use automatic reference_year logic)
 ![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2025.12-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-yellow.svg)
 

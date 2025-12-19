@@ -81,7 +81,7 @@
         "description": "Modifier la zone scolaire et les règles de garde pendant les vacances. Les vacances priment sur la garde classique.",
         "data": {
           "zone": "Zone scolaire",
-          "vacation_rule": "Règle vacances",
+          "reference_year": "Année de référence (paire/impaire)",
           "summer_rule": "Règle grandes vacances"
         }
       },

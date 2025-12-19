@@ -161,25 +161,6 @@ def _start_day_selector() -> selector.SelectSelector:
     )
 
 
-def _vacation_rule_selector() -> selector.SelectSelector:
-    """Create a vacation rule selector with French labels."""
-    translations = {
-        "july": "Juillet complet",
-        "august": "Août complet",
-        "custom": "Personnalisé",
-    }
-    options_list = [{"value": "", "label": "Aucune"}]
-    options_list.extend(
-        [{"value": rule, "label": translations.get(rule, rule)} for rule in VACATION_RULES]
-    )
-    return selector.SelectSelector(
-        selector.SelectSelectorConfig(
-            options=options_list,
-            mode=selector.SelectSelectorMode.DROPDOWN,
-        )
-    )
-
-
 def _summer_rule_selector() -> selector.SelectSelector:
     """Create a summer rule selector with French labels."""
     translations = {

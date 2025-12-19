@@ -69,7 +69,7 @@
         "description": "Modify school zone (API) and vacation rules.",
         "data": {
           "zone": "School zone",
-          "vacation_rule": "Vacation rule",
+          "reference_year": "Reference year (even/odd)",
           "summer_rule": "Summer break rule"
         }
       },

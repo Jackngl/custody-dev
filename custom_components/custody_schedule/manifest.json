@@ -1,11 +1,7 @@
 {
   "domain": "custody_schedule",
   "name": "Planning de garde",
-<<<<<<< HEAD
   "version": "1.0.67",
-=======
-  "version": "1.0.65",
->>>>>>> bca31b6 (Remove vacation_rule field from UI, use automatic reference_year logic)
   "after_dependencies": [
     "calendar"
   ],
