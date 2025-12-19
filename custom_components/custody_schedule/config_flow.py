@@ -315,9 +315,9 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_START_DAY, default=self._data.get(CONF_START_DAY, "monday")
             )] = _start_day_selector()
         else:
-            # Still include it but hidden, default to friday for weekends
+            # Still include it but hidden, preserve existing value to avoid overwriting user's saved preference
             schema_dict[vol.Optional(
-                CONF_START_DAY, default="friday"
+                CONF_START_DAY, default=self._data.get(CONF_START_DAY, "friday")
             )] = _start_day_selector()
         
         schema = vol.Schema(schema_dict)
@@ -476,9 +476,9 @@ class CustodyScheduleOptionsFlow(config_entries.OptionsFlow):
                 CONF_START_DAY, default=data.get(CONF_START_DAY, "monday")
             )] = _start_day_selector()
         else:
-            # Still include it but hidden, default to friday for weekends
+            # Still include it but hidden, preserve existing value to avoid overwriting user's saved preference
             schema_dict[vol.Optional(
-                CONF_START_DAY, default="friday"
+                CONF_START_DAY, default=data.get(CONF_START_DAY, "friday")
             )] = _start_day_selector()
         
         schema = vol.Schema(schema_dict)
