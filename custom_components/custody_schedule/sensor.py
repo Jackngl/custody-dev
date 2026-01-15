@@ -48,21 +48,21 @@ class SensorDefinition:
 
 
 SENSORS: tuple[SensorDefinition, ...] = (
-    SensorDefinition("next_arrival", "Prochaine arrivée", "mdi:calendar-clock"),
-    SensorDefinition("next_departure", "Prochain départ", "mdi:calendar-arrow-right"),
+    SensorDefinition("next_arrival", "Prochaine arrivée (garde)", "mdi:calendar-clock"),
+    SensorDefinition("next_departure", "Prochain départ (garde)", "mdi:calendar-arrow-right"),
     SensorDefinition(
         "days_remaining",
-        "Jours restants",
+        "Jours restants (garde)",
         "mdi:clock-end",
         SensorDeviceClass.DURATION,
         SensorStateClass.MEASUREMENT,
         UnitOfTime.DAYS,
     ),
     SensorDefinition("current_period", "Période actuelle", "mdi:school"),
-    SensorDefinition("next_vacation_name", "Prochaines vacances", "mdi:calendar-star"),
+    SensorDefinition("next_vacation_name", "Prochaines vacances scolaires", "mdi:calendar-star"),
     SensorDefinition(
         "days_until_vacation",
-        "Jours jusqu'aux vacances",
+        "Jours jusqu'aux vacances scolaires",
         "mdi:calendar-clock",
         SensorDeviceClass.DURATION,
         SensorStateClass.MEASUREMENT,
@@ -101,12 +101,22 @@ class CustodyScheduleSensor(CoordinatorEntity[CustodyComputation], SensorEntity)
         self._definition = definition
         self._entry = entry
         self._attr_unique_id = f"{entry.entry_id}_{definition.key}"
-        self._attr_name = f"{child_name} Planning de garde {definition.name}"
+        self._attr_name = f"{child_name} {definition.name}"
         self._attr_icon = definition.icon
         self._attr_device_class = definition.device_class
         self._attr_state_class = definition.state_class
         self._attr_native_unit_of_measurement = definition.unit
         self._attr_device_info = None
+        # Ajouter des descriptions selon le type de capteur
+        descriptions = {
+            "next_arrival": "Date et heure de la prochaine arrivée de l'enfant (garde classique ou vacances)",
+            "next_departure": "Date et heure du prochain départ de l'enfant (garde classique ou vacances)",
+            "days_remaining": "Nombre de jours restants avant le prochain changement de garde",
+            "current_period": "Période actuelle (garde classique, vacances scolaires, ou aucune)",
+            "next_vacation_name": "Nom des prochaines vacances scolaires à venir",
+            "days_until_vacation": "Nombre de jours restants avant le début des prochaines vacances scolaires",
+        }
+        self._attr_entity_description = descriptions.get(definition.key, "")
         photo = entry.data.get(CONF_PHOTO)
         if photo:
             self._attr_entity_picture = photo

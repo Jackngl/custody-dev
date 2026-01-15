@@ -42,7 +42,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
 
 class CustodyPresenceBinarySensor(CoordinatorEntity[CustodyComputation], BinarySensorEntity):
-    """Represent the presence status."""
+    """Représente le statut de présence de l'enfant (garde classique ou vacances scolaires)."""
 
     _attr_device_class = BinarySensorDeviceClass.PRESENCE
     _attr_has_entity_name = False
@@ -50,9 +50,10 @@ class CustodyPresenceBinarySensor(CoordinatorEntity[CustodyComputation], BinaryS
     def __init__(self, coordinator: CustodyScheduleCoordinator, entry: ConfigEntry, child_name: str) -> None:
         super().__init__(coordinator)
         self._entry = entry
-        self._attr_name = f"{child_name} Planning de garde Présence"
+        self._attr_name = f"{child_name} Présence"
         self._attr_unique_id = f"{entry.entry_id}_presence"
         self._attr_device_info = None
+        self._attr_entity_description = "Indique si l'enfant est actuellement en garde (garde classique ou vacances scolaires)"
         photo = entry.data.get(CONF_PHOTO)
         if photo:
             self._attr_entity_picture = photo
