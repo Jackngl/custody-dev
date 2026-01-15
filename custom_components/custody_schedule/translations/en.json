@@ -12,11 +12,11 @@
         }
       },
       "custody": {
-        "title": "Custody rules",
-        "description": "Define the custody rhythm and hours.",
+        "title": "Regular custody (weekends/weeks)",
+        "description": "Configure regular custody outside school holidays. Public holidays (Friday/Monday) automatically extend weekends.",
         "data": {
           "custody_type": "Custody type",
-          "reference_year": "Reference year (even/odd)",
+          "reference_year": "Reference year for regular custody (even/odd)",
           "start_day": "Cycle start day",
           "arrival_time": "Arrival time",
           "departure_time": "Departure time",
@@ -25,11 +25,14 @@
       },
       "vacations": {
         "title": "School vacations",
-        "description": "Select the school zone and holiday rules.",
+        "description": "Configure custody rules during school holidays. Vacations take priority over regular custody.",
         "data": {
           "zone": "School zone",
-          "reference_year": "Reference year (even/odd)",
-          "summer_rule": "Summer break rule"
+          "reference_year": "Reference year for vacations (even/odd)",
+          "school_level": "School level",
+          "july_rule": "July rule",
+          "august_rule": "August rule",
+          "summer_rule": "Summer break rule (fortnights)"
         }
       },
       "advanced": {
@@ -65,12 +68,15 @@
         }
       },
       "vacations": {
-        "title": "School zone and vacation rules",
-        "description": "Modify school zone (API) and vacation rules.",
+        "title": "School vacations",
+        "description": "Modify school zone and custody rules during vacations. Vacations take priority over regular custody.",
         "data": {
           "zone": "School zone",
-          "reference_year": "Reference year (even/odd)",
-          "summer_rule": "Summer break rule"
+          "reference_year": "Reference year for vacations (even/odd)",
+          "school_level": "School level",
+          "july_rule": "July rule",
+          "august_rule": "August rule",
+          "summer_rule": "Summer break rule (fortnights)"
         }
       },
       "advanced": {
@@ -95,11 +101,18 @@
       "custom": "Custom"
     },
     "summer_rule": {
-      "summer_parity_auto": "Automatic by reference (even/odd year)",
       "july_first_half": "July - first half (1-15 July)",
       "july_second_half": "July - second half (16-31 July)",
       "august_first_half": "August - first half (1-15 August)",
       "august_second_half": "August - second half (16-31 August)"
+    },
+    "july_rule": {
+      "july_even": "July (even years)",
+      "july_odd": "July (odd years)"
+    },
+    "august_rule": {
+      "august_even": "August (even years)",
+      "august_odd": "August (odd years)"
     },
     "reference_year": {
       "even": "Even",

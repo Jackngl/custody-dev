@@ -42,6 +42,8 @@ CONF_NOTES = "notes"
 CONF_ZONE = "zone"
 CONF_VACATION_RULE = "vacation_rule"
 CONF_SUMMER_RULE = "summer_rule"
+CONF_JULY_RULE = "july_rule"
+CONF_AUGUST_RULE = "august_rule"
 CONF_NOTIFICATIONS = "notifications"
 CONF_CALENDAR_SYNC = "calendar_sync"
 CONF_EXCEPTIONS = "exceptions"
@@ -74,11 +76,21 @@ VACATION_RULES = [
     "custom",
 ]
 SUMMER_RULES = [
-    "summer_parity_auto",
     "july_first_half",
     "july_second_half",
     "august_first_half",
     "august_second_half",
+]
+
+# Nouvelles règles pour juillet et août avec choix années paires/impaire
+JULY_RULES = [
+    "july_even",  # Juillet en années paires
+    "july_odd",   # Juillet en années impaires
+]
+
+AUGUST_RULES = [
+    "august_even",  # Août en années paires
+    "august_odd",   # Août en années impaires
 ]
 
 CUSTODY_TYPES = {

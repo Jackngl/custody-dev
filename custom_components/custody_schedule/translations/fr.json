@@ -12,11 +12,11 @@
         }
       },
       "custody": {
-        "title": "Règles de garde",
-        "description": "Choisir le rythme et les horaires.",
+        "title": "Garde classique (weekends/semaines)",
+        "description": "Configurer la garde normale hors vacances scolaires. Les jours fériés (vendredi/lundi) étendent automatiquement les weekends.",
         "data": {
           "custody_type": "Type de garde",
-          "reference_year": "Année de référence (paire/impaire)",
+          "reference_year": "Année de référence pour la garde classique (paire/impaire)",
           "start_day": "Jour de départ du cycle",
           "arrival_time": "Heure d'arrivée",
           "departure_time": "Heure de départ",
@@ -25,11 +25,14 @@
       },
       "vacations": {
         "title": "Vacances scolaires",
-        "description": "Sélectionner la zone et les règles pendant les vacances.",
+        "description": "Configurer les règles de garde pendant les vacances scolaires. Les vacances priment sur la garde classique.",
         "data": {
           "zone": "Zone scolaire",
-          "reference_year": "Année de référence (paire/impaire)",
-          "summer_rule": "Règle grandes vacances"
+          "reference_year": "Année de référence pour les vacances (paire/impaire)",
+          "school_level": "Niveau scolaire",
+          "july_rule": "Règle pour juillet",
+          "august_rule": "Règle pour août",
+          "summer_rule": "Règle grandes vacances (quinzaines)"
         }
       },
       "advanced": {
@@ -65,12 +68,15 @@
         }
       },
       "vacations": {
-        "title": "Zone scolaire et règles vacances",
-        "description": "Modifier la zone scolaire (API) et les règles pendant les vacances.",
+        "title": "Vacances scolaires",
+        "description": "Modifier la zone scolaire et les règles de garde pendant les vacances. Les vacances priment sur la garde classique.",
         "data": {
           "zone": "Zone scolaire",
-          "reference_year": "Année de référence (paire/impaire)",
-          "summer_rule": "Règle grandes vacances"
+          "reference_year": "Année de référence pour les vacances (paire/impaire)",
+          "school_level": "Niveau scolaire",
+          "july_rule": "Règle pour juillet",
+          "august_rule": "Règle pour août",
+          "summer_rule": "Règle grandes vacances (quinzaines)"
         }
       },
       "advanced": {
@@ -95,11 +101,18 @@
       "custom": "Personnalisé"
     },
     "summer_rule": {
-      "summer_parity_auto": "Automatique selon référence (année paire/impaire)",
       "july_first_half": "Juillet - 1ère moitié (1-15 juillet)",
       "july_second_half": "Juillet - 2ème moitié (16-31 juillet)",
       "august_first_half": "Août - 1ère moitié (1-15 août)",
       "august_second_half": "Août - 2ème moitié (16-31 août)"
+    },
+    "july_rule": {
+      "july_even": "Juillet (années paires)",
+      "july_odd": "Juillet (années impaires)"
+    },
+    "august_rule": {
+      "august_even": "Août (années paires)",
+      "august_odd": "Août (années impaires)"
     },
     "reference_year": {
       "even": "Paire",

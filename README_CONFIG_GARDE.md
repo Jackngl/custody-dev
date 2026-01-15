@@ -79,13 +79,14 @@ L'application supporte **6 types de garde** pour les weekends et semaines :
 - **Valeurs** : Voir [Types de garde disponibles](#types-de-garde-disponibles)
 - **Exemple** : `"even_weekends"` pour les weekends semaines paires
 
-#### 2. **Année de référence** (`reference_year`)
-- **Description** : Année de référence pour déterminer la parité (paire ou impaire)
+#### 2. **Année de référence pour la garde classique** (`reference_year`)
+- **Description** : Année de référence pour déterminer la parité (paire ou impaire) pour la garde classique uniquement
 - **Valeurs** :
   - `"even"` : Année paire (2024, 2026, ...)
   - `"odd"` : Année impaire (2025, 2027, ...)
-- **Utilisation** : Détermine quel parent a la garde selon la parité de l'année
-- **Exemple** : Si `"odd"` et que nous sommes en 2025 (impaire), vous avez la garde
+- **Utilisation** : Détermine quel parent a la garde classique selon la parité de l'année
+- **Exemple** : Si `"odd"` et que nous sommes en 2025 (impaire), vous avez la garde classique
+- **Note** : Ce `reference_year` est **indépendant** du `reference_year` configuré dans le masque "Vacances scolaires". Chaque masque a son propre `reference_year`.
 
 #### 3. **Heure d'arrivée** (`arrival_time`)
 - **Description** : Heure à laquelle vous récupérez l'enfant

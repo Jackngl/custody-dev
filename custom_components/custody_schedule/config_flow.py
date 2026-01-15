@@ -15,6 +15,7 @@ from homeassistant.util import slugify
 
 from .const import (
     CONF_ARRIVAL_TIME,
+    CONF_AUGUST_RULE,
     CONF_CALENDAR_SYNC,
     CONF_CHILD_NAME,
     CONF_CHILD_NAME_DISPLAY,
@@ -23,6 +24,7 @@ from .const import (
     CONF_EXCEPTIONS,
     CONF_HOLIDAY_API_URL,
     CONF_ICON,
+    CONF_JULY_RULE,
     CONF_LOCATION,
     CONF_NOTES,
     CONF_NOTIFICATIONS,
@@ -32,11 +34,13 @@ from .const import (
     CONF_START_DAY,
     CONF_SUMMER_RULE,
     CONF_ZONE,
+    AUGUST_RULES,
     CUSTODY_TYPES,
     DOMAIN,
     FRENCH_ZONES,
     FRENCH_ZONES_WITH_CITIES,
     HOLIDAY_API,
+    JULY_RULES,
     REFERENCE_YEARS,
     SUMMER_RULES,
     VACATION_RULES,
@@ -162,9 +166,8 @@ def _start_day_selector() -> selector.SelectSelector:
 
 
 def _summer_rule_selector() -> selector.SelectSelector:
-    """Create a summer rule selector with French labels."""
+    """Create a summer rule selector with French labels (quinzaines)."""
     translations = {
-        "summer_parity_auto": "Automatique selon année (paire=Août, impaire=Juillet)",
         "july_first_half": "Juillet - 1ère moitié (1-15 juillet)",
         "july_second_half": "Juillet - 2ème moitié (16-31 juillet)",
         "august_first_half": "Août - 1ère moitié (1-15 août)",
@@ -173,6 +176,42 @@ def _summer_rule_selector() -> selector.SelectSelector:
     options_list = [{"value": "", "label": "Aucune"}]
     options_list.extend(
         [{"value": rule, "label": translations.get(rule, rule)} for rule in SUMMER_RULES]
+    )
+    return selector.SelectSelector(
+        selector.SelectSelectorConfig(
+            options=options_list,
+            mode=selector.SelectSelectorMode.DROPDOWN,
+        )
+    )
+
+
+def _july_rule_selector() -> selector.SelectSelector:
+    """Create a July rule selector with French labels."""
+    translations = {
+        "july_even": "Juillet (années paires)",
+        "july_odd": "Juillet (années impaires)",
+    }
+    options_list = [{"value": "", "label": "Aucune"}]
+    options_list.extend(
+        [{"value": rule, "label": translations.get(rule, rule)} for rule in JULY_RULES]
+    )
+    return selector.SelectSelector(
+        selector.SelectSelectorConfig(
+            options=options_list,
+            mode=selector.SelectSelectorMode.DROPDOWN,
+        )
+    )
+
+
+def _august_rule_selector() -> selector.SelectSelector:
+    """Create an August rule selector with French labels."""
+    translations = {
+        "august_even": "Août (années paires)",
+        "august_odd": "Août (années impaires)",
+    }
+    options_list = [{"value": "", "label": "Aucune"}]
+    options_list.extend(
+        [{"value": rule, "label": translations.get(rule, rule)} for rule in AUGUST_RULES]
     )
     return selector.SelectSelector(
         selector.SelectSelectorConfig(
@@ -275,7 +314,7 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(step_id="user", data_schema=schema, errors=errors)
 
     async def async_step_custody(self, user_input: dict[str, Any] | None = None) -> FlowResult:
-        """Select custody type and schedules (step 2)."""
+        """Configure garde classique (weekends/semaines) - step 2."""
         if user_input:
             cleaned = dict(user_input)
             cleaned[CONF_ARRIVAL_TIME] = _time_to_str(user_input.get(CONF_ARRIVAL_TIME), "08:00")
@@ -303,9 +342,6 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Required(
                 CONF_DEPARTURE_TIME, default=self._data.get(CONF_DEPARTURE_TIME, "19:00")
             ): selector.TimeSelector(),
-            vol.Optional(
-                CONF_SCHOOL_LEVEL, default=self._data.get(CONF_SCHOOL_LEVEL, "primary")
-            ): _school_level_selector(),
             vol.Optional(CONF_LOCATION, default=self._data.get(CONF_LOCATION, "")): cv.string,
         }
         
@@ -324,24 +360,36 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(step_id="custody", data_schema=schema)
 
     async def async_step_vacations(self, user_input: dict[str, Any] | None = None) -> FlowResult:
-        """Configure school zones and vacation rules (step 3)."""
+        """Configure vacances scolaires - step 3."""
         if user_input:
             cleaned = dict(user_input)
             # Convert empty strings to None for optional fields
             if cleaned.get(CONF_SUMMER_RULE) == "":
                 cleaned[CONF_SUMMER_RULE] = None
+            if cleaned.get(CONF_JULY_RULE) == "":
+                cleaned[CONF_JULY_RULE] = None
+            if cleaned.get(CONF_AUGUST_RULE) == "":
+                cleaned[CONF_AUGUST_RULE] = None
             self._data.update(cleaned)
             return await self.async_step_advanced()
 
         # Use saved data if user goes back, convert None to empty string for selectors
         summer_rule_default = self._data.get(CONF_SUMMER_RULE) or ""
-        # Get reference_year from custody step or default to "even"
+        july_rule_default = self._data.get(CONF_JULY_RULE) or ""
+        august_rule_default = self._data.get(CONF_AUGUST_RULE) or ""
+        # Get reference_year for vacations (separate from custody reference_year)
+        # Default to "even" if not set
         reference_year_default = self._data.get(CONF_REFERENCE_YEAR, "even")
         
         schema = vol.Schema(
             {
                 vol.Required(CONF_ZONE, default=self._data.get(CONF_ZONE, "A")): _zone_selector(),
                 vol.Required(CONF_REFERENCE_YEAR, default=reference_year_default): _reference_year_selector(),
+                vol.Optional(
+                    CONF_SCHOOL_LEVEL, default=self._data.get(CONF_SCHOOL_LEVEL, "primary")
+                ): _school_level_selector(),
+                vol.Optional(CONF_JULY_RULE, default=july_rule_default): _july_rule_selector(),
+                vol.Optional(CONF_AUGUST_RULE, default=august_rule_default): _august_rule_selector(),
                 vol.Optional(CONF_SUMMER_RULE, default=summer_rule_default): _summer_rule_selector(),
             }
         )
@@ -438,15 +486,15 @@ class CustodyScheduleOptionsFlow(config_entries.OptionsFlow):
         return self.async_show_menu(
             step_id="init",
             menu_options={
-                "custody": "Type de garde",
+                "custody": "Garde classique",
                 "schedule": "Horaires et lieu",
-                "vacations": "Zone scolaire et règles vacances",
+                "vacations": "Vacances scolaires",
                 "advanced": "Options avancées",
             },
         )
 
     async def async_step_custody(self, user_input: dict[str, Any] | None = None) -> FlowResult:
-        """Modify custody type, reference year, and start day."""
+        """Modify garde classique (custody type, reference year, and start day)."""
         if user_input:
             cleaned = dict(user_input)
             # For alternate_weekend/alternate_week_parity, start_day is not used (based on ISO week parity)
@@ -465,9 +513,6 @@ class CustodyScheduleOptionsFlow(config_entries.OptionsFlow):
             vol.Required(
                 CONF_REFERENCE_YEAR, default=data.get(CONF_REFERENCE_YEAR, "even")
             ): _reference_year_selector(),
-            vol.Optional(
-                CONF_SCHOOL_LEVEL, default=data.get(CONF_SCHOOL_LEVEL, "primary")
-            ): _school_level_selector(),
         }
         
         # Only show start_day for custody types that use it
@@ -508,25 +553,36 @@ class CustodyScheduleOptionsFlow(config_entries.OptionsFlow):
         return self.async_show_form(step_id="schedule", data_schema=schema)
 
     async def async_step_vacations(self, user_input: dict[str, Any] | None = None) -> FlowResult:
-        """Modify school zone and vacation rules."""
+        """Modify vacances scolaires (school zone and vacation rules)."""
         if user_input:
             cleaned = dict(user_input)
             # Convert empty strings to None for optional fields
             if cleaned.get(CONF_SUMMER_RULE) == "":
                 cleaned[CONF_SUMMER_RULE] = None
+            if cleaned.get(CONF_JULY_RULE) == "":
+                cleaned[CONF_JULY_RULE] = None
+            if cleaned.get(CONF_AUGUST_RULE) == "":
+                cleaned[CONF_AUGUST_RULE] = None
             self._data.update(cleaned)
             return self.async_create_entry(title="", data=self._data)
 
         data = {**self._entry.data, **(self._entry.options or {})}
         # Convert None to empty string for selectors
         summer_rule_default = data.get(CONF_SUMMER_RULE) or ""
-        # Get reference_year from data or default to "even"
+        july_rule_default = data.get(CONF_JULY_RULE) or ""
+        august_rule_default = data.get(CONF_AUGUST_RULE) or ""
+        # Get reference_year for vacations (separate from custody reference_year)
         reference_year_default = data.get(CONF_REFERENCE_YEAR, "even")
         
         schema = vol.Schema(
             {
                 vol.Required(CONF_ZONE, default=data.get(CONF_ZONE, "A")): _zone_selector(),
                 vol.Required(CONF_REFERENCE_YEAR, default=reference_year_default): _reference_year_selector(),
+                vol.Optional(
+                    CONF_SCHOOL_LEVEL, default=data.get(CONF_SCHOOL_LEVEL, "primary")
+                ): _school_level_selector(),
+                vol.Optional(CONF_JULY_RULE, default=july_rule_default): _july_rule_selector(),
+                vol.Optional(CONF_AUGUST_RULE, default=august_rule_default): _august_rule_selector(),
                 vol.Optional(CONF_SUMMER_RULE, default=summer_rule_default): _summer_rule_selector(),
             }
         )
