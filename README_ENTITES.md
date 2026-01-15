@@ -85,7 +85,48 @@ Calendrier complet affichant tous les événements de garde (weekends/semaines e
 
 ---
 
-### 3. Sensor : Prochaine arrivée (garde)
+### 3. Device Tracker : Suivi de présence
+
+**Nom de l'entité** : `device_tracker.{enfant}_suivi`  
+**Nom affiché** : `{Enfant} Suivi`
+
+#### Description
+Dispositif de suivi basé sur la présence de l'enfant (garde classique ou vacances scolaires). Cette entité peut être utilisée dans l'entité **Personne** de Home Assistant pour créer un suivi de présence complet.
+
+#### États
+- **`home`** : L'enfant est actuellement en garde (présent)
+- **`not_home`** : L'enfant n'est pas en garde actuellement (absent)
+- **`unavailable`** : Données non disponibles
+
+#### Attributs disponibles
+- `child_name` : Nom de l'enfant
+- `source` : Source du suivi (`custody_schedule`)
+- `is_present` : État de présence (booléen)
+
+#### Utilisation
+- **Personne Home Assistant** : Associer ce device tracker à une personne pour le suivi de présence
+- **Dashboard** : Afficher le statut de présence dans les cartes de personne
+- **Automation** : Déclencher des actions basées sur la présence/absence
+- **Zones** : Compatible avec le système de zones de Home Assistant
+
+#### Configuration d'une Personne
+1. Aller dans **Paramètres** → **Personnes et zones**
+2. Cliquer sur **Créer une personne**
+3. Nommer la personne (ex: "Sarah-Léa")
+4. Dans **Dispositifs de suivi**, sélectionner `device_tracker.{enfant}_suivi`
+5. Ajouter une photo si souhaité
+6. Sauvegarder
+
+#### Avantages
+- ✅ Intégration native avec le système de Personnes de Home Assistant
+- ✅ Mise à jour automatique toutes les 15 minutes
+- ✅ Historique des changements de statut
+- ✅ Utilisable dans les automations et les dashboards
+- ✅ Compatible avec les zones personnalisées
+
+---
+
+### 4. Sensor : Prochaine arrivée (garde)
 
 **Nom de l'entité** : `sensor.{enfant}_next_arrival`  
 **Nom affiché** : `{Enfant} Prochaine arrivée (garde)`
@@ -219,6 +260,21 @@ Nombre de jours restants avant le début des prochaines vacances scolaires.
 ---
 
 ## 🎨 Utilisation dans les dashboards
+
+### Exemple 0 : Carte Personne avec device tracker
+
+```yaml
+type: person
+entity: person.sarah_lea
+```
+
+Cette carte affiche automatiquement :
+- Le statut de présence (home/not_home)
+- La photo de la personne
+- L'historique des changements de statut
+- Compatible avec les zones personnalisées
+
+---
 
 ### Exemple 1 : Carte de présence simple
 
@@ -514,11 +570,13 @@ Toutes les entités partagent des attributs communs accessibles via `{{ state_at
 |------|-----|-------------|------------------------|
 | Binary Sensor | `{Enfant} Présence` | Statut de présence | Indicateur visuel, automations |
 | Calendar | `{Enfant} Calendrier` | Calendrier complet | Vue calendrier, planification |
+| Device Tracker | `{Enfant} Suivi` | Présence/Absence | Personnes, zones, automations |
 | Sensor | `{Enfant} Prochaine arrivée` | Date/heure arrivée | Notifications, préparations |
 | Sensor | `{Enfant} Prochain départ` | Date/heure départ | Notifications, préparations |
 | Sensor | `{Enfant} Jours restants` | Jours avant changement | Compteurs, alertes |
 | Sensor | `{Enfant} Période actuelle` | Type de période | Adaptations de comportement |
 | Sensor | `{Enfant} Prochaines vacances` | Nom des vacances | Informations, planification |
+| Sensor | `{Enfant} Date des prochaines vacances` | Date de début | Planification, affichage |
 | Sensor | `{Enfant} Jours jusqu'aux vacances` | Jours avant vacances | Compteurs, préparations |
 
 ---
