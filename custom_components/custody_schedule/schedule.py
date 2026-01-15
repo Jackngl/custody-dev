@@ -345,6 +345,11 @@ class CustodyScheduleManager:
         This implements the priority rule: vacations override weekends/weeks.
         Vacation periods completely replace normal custody rules.
         
+        IMPORTANT: Only filter windows that overlap with actual vacation custody windows,
+        not filter windows. Filter windows are used to prevent pattern windows during
+        the full vacation period, but we should only filter if there's an actual overlap
+        with a real vacation custody window.
+        
         Args:
             pattern_windows: Normal weekend/week windows from custody_type
             vacation_windows: Vacation windows including filter windows (source="vacation_filter")
@@ -356,13 +361,18 @@ class CustodyScheduleManager:
             return pattern_windows
         
         # Build a list of vacation periods (start, end) for quick overlap checking
-        # This includes both actual vacation windows and filter windows
-        # Filter windows cover the entire vacation period to ensure all weekends are removed
-        vacation_periods = [(vw.start, vw.end) for vw in vacation_windows]
+        # IMPORTANT: Only use actual vacation custody windows, NOT filter windows
+        # Filter windows are too broad and can incorrectly filter weekends that don't
+        # actually overlap with the user's vacation custody period
+        vacation_periods = [(vw.start, vw.end) for vw in vacation_windows if vw.source != "vacation_filter"]
+        
+        # If no actual vacation custody windows, don't filter anything
+        if not vacation_periods:
+            return pattern_windows
         
         filtered = []
         for pattern_window in pattern_windows:
-            # Check if this pattern window (weekend/week) overlaps with any vacation period
+            # Check if this pattern window (weekend/week) overlaps with any actual vacation custody period
             overlaps = False
             for vac_start, vac_end in vacation_periods:
                 # Check for overlap: windows overlap if one starts before the other ends
@@ -370,7 +380,7 @@ class CustodyScheduleManager:
                     overlaps = True
                     break
             
-            # Only keep pattern windows that don't overlap with vacations
+            # Only keep pattern windows that don't overlap with actual vacation custody periods
             if not overlaps:
                 filtered.append(pattern_window)
         
