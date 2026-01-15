@@ -60,6 +60,7 @@ SENSORS: tuple[SensorDefinition, ...] = (
     ),
     SensorDefinition("current_period", "Période actuelle", "mdi:school"),
     SensorDefinition("next_vacation_name", "Prochaines vacances scolaires", "mdi:calendar-star"),
+    SensorDefinition("next_vacation_start", "Date des prochaines vacances", "mdi:calendar-start"),
     SensorDefinition(
         "days_until_vacation",
         "Jours jusqu'aux vacances scolaires",
@@ -114,6 +115,7 @@ class CustodyScheduleSensor(CoordinatorEntity[CustodyComputation], SensorEntity)
             "days_remaining": "Nombre de jours restants avant le prochain changement de garde",
             "current_period": "Période actuelle (garde classique, vacances scolaires, ou aucune)",
             "next_vacation_name": "Nom des prochaines vacances scolaires à venir",
+            "next_vacation_start": "Date et heure de début des prochaines vacances scolaires",
             "days_until_vacation": "Nombre de jours restants avant le début des prochaines vacances scolaires",
         }
         self._attr_entity_description = descriptions.get(definition.key, "")
@@ -138,6 +140,8 @@ class CustodyScheduleSensor(CoordinatorEntity[CustodyComputation], SensorEntity)
             return data.current_period
         if self._definition.key == "next_vacation_name":
             return data.next_vacation_name
+        if self._definition.key == "next_vacation_start":
+            return self._format_datetime(data.next_vacation_start)
         if self._definition.key == "days_until_vacation":
             return data.days_until_vacation
         return None
@@ -166,8 +170,13 @@ class CustodyScheduleSensor(CoordinatorEntity[CustodyComputation], SensorEntity)
         return {key: value for key, value in attrs.items() if value is not None}
 
     def _format_datetime(self, value: datetime | None) -> str | None:
-        """Return ISO string for UI friendliness."""
+        """Return formatted datetime string for UI friendliness."""
         if value is None:
             return None
         localized = dt_util.as_local(value)
-        return localized.isoformat()
+        # Format lisible en français : "27 janvier 2026 à 16:15"
+        months = [
+            "janvier", "février", "mars", "avril", "mai", "juin",
+            "juillet", "août", "septembre", "octobre", "novembre", "décembre"
+        ]
+        return f"{localized.day} {months[localized.month - 1]} {localized.year} à {localized.strftime('%H:%M')}"
