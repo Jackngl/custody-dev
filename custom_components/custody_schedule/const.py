@@ -45,6 +45,7 @@ CONF_VACATION_RULE = "vacation_rule"
 CONF_SUMMER_RULE = "summer_rule"
 CONF_JULY_RULE = "july_rule"
 CONF_AUGUST_RULE = "august_rule"
+CONF_VACATION_SPLIT_MODE = "vacation_split_mode"
 CONF_NOTIFICATIONS = "notifications"
 CONF_CALENDAR_SYNC = "calendar_sync"
 CONF_EXCEPTIONS = "exceptions"
@@ -52,6 +53,7 @@ CONF_CUSTOM_RULES = "custom_rules"
 CONF_HOLIDAY_API_URL = "holiday_api_url"
 
 REFERENCE_YEARS = ["even", "odd"]
+VACATION_SPLIT_MODES = ["odd_first", "odd_second"]
 
 # Zones étendues avec libellés pour l'UI
 FRENCH_ZONES = ["A", "B", "C", "Corse", "DOM-TOM"]

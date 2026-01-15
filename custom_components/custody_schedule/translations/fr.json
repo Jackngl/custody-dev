@@ -25,10 +25,11 @@
       },
       "vacations": {
         "title": "Vacances scolaires",
-        "description": "Configurer les règles de garde pendant les vacances scolaires. Les vacances priment sur la garde classique.",
+        "description": "Configurer les règles de garde pendant les vacances scolaires. Les vacances priment sur la garde classique. La parité de l'année en cours détermine la moitié applicable.",
         "data": {
           "zone": "Zone scolaire",
           "reference_year": "Année de référence pour les vacances (paire/impaire)",
+          "vacation_split_mode": "Répartition des moitiés (paire/impaire)",
           "school_level": "Niveau scolaire",
           "july_rule": "Règle pour juillet",
           "august_rule": "Règle pour août",
@@ -69,10 +70,11 @@
       },
       "vacations": {
         "title": "Vacances scolaires",
-        "description": "Modifier la zone scolaire et les règles de garde pendant les vacances. Les vacances priment sur la garde classique.",
+        "description": "Modifier la zone scolaire et les règles de garde pendant les vacances. Les vacances priment sur la garde classique. La parité de l'année en cours détermine la moitié applicable.",
         "data": {
           "zone": "Zone scolaire",
           "reference_year": "Année de référence pour les vacances (paire/impaire)",
+          "vacation_split_mode": "Répartition des moitiés (paire/impaire)",
           "school_level": "Niveau scolaire",
           "july_rule": "Règle pour juillet",
           "august_rule": "Règle pour août",

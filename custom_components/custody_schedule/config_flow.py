@@ -33,6 +33,7 @@ from .const import (
     CONF_SCHOOL_LEVEL,
     CONF_START_DAY,
     CONF_SUMMER_RULE,
+    CONF_VACATION_SPLIT_MODE,
     CONF_ZONE,
     AUGUST_RULES,
     CUSTODY_TYPES,
@@ -44,6 +45,7 @@ from .const import (
     REFERENCE_YEARS,
     SUMMER_RULES,
     VACATION_RULES,
+    VACATION_SPLIT_MODES,
 )
 
 
@@ -221,6 +223,23 @@ def _august_rule_selector() -> selector.SelectSelector:
     )
 
 
+def _vacation_split_selector() -> selector.SelectSelector:
+    """Create a selector for vacation split mode (odd/even halves)."""
+    translations = {
+        "odd_first": "Années impaires = 1ère moitié (années paires = 2ème moitié)",
+        "odd_second": "Années impaires = 2ème moitié (années paires = 1ère moitié)",
+    }
+    options_list = [
+        {"value": mode, "label": translations.get(mode, mode)} for mode in VACATION_SPLIT_MODES
+    ]
+    return selector.SelectSelector(
+        selector.SelectSelectorConfig(
+            options=options_list,
+            mode=selector.SelectSelectorMode.DROPDOWN,
+        )
+    )
+
+
 def _time_to_str(value: Any, default: str) -> str:
     """Convert TimeSelector output to HH:MM string.
     
@@ -375,11 +394,13 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # Get reference_year for vacations (separate from custody reference_year)
         # Default to "even" if not set
         reference_year_default = self._data.get(CONF_REFERENCE_YEAR, "even")
+        vacation_split_default = self._data.get(CONF_VACATION_SPLIT_MODE, "odd_first")
         
         schema = vol.Schema(
             {
                 vol.Required(CONF_ZONE, default=self._data.get(CONF_ZONE, "A")): _zone_selector(),
                 vol.Required(CONF_REFERENCE_YEAR, default=reference_year_default): _reference_year_selector(),
+                vol.Optional(CONF_VACATION_SPLIT_MODE, default=vacation_split_default): _vacation_split_selector(),
                 vol.Optional(
                     CONF_SCHOOL_LEVEL, default=self._data.get(CONF_SCHOOL_LEVEL, "primary")
                 ): _school_level_selector(),
@@ -563,11 +584,13 @@ class CustodyScheduleOptionsFlow(config_entries.OptionsFlow):
         august_rule_default = data.get(CONF_AUGUST_RULE) or ""
         # Get reference_year for vacations (separate from custody reference_year)
         reference_year_default = data.get(CONF_REFERENCE_YEAR, "even")
+        vacation_split_default = data.get(CONF_VACATION_SPLIT_MODE, "odd_first")
         
         schema = vol.Schema(
             {
                 vol.Required(CONF_ZONE, default=data.get(CONF_ZONE, "A")): _zone_selector(),
                 vol.Required(CONF_REFERENCE_YEAR, default=reference_year_default): _reference_year_selector(),
+                vol.Optional(CONF_VACATION_SPLIT_MODE, default=vacation_split_default): _vacation_split_selector(),
                 vol.Optional(
                     CONF_SCHOOL_LEVEL, default=data.get(CONF_SCHOOL_LEVEL, "primary")
                 ): _school_level_selector(),

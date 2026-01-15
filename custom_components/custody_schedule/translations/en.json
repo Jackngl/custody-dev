@@ -25,10 +25,11 @@
       },
       "vacations": {
         "title": "School vacations",
-        "description": "Configure custody rules during school holidays. Vacations take priority over regular custody.",
+        "description": "Configure custody rules during school holidays. Vacations take priority over regular custody. Current year parity determines the applicable half.",
         "data": {
           "zone": "School zone",
           "reference_year": "Reference year for vacations (even/odd)",
+          "vacation_split_mode": "Half split (even/odd years)",
           "school_level": "School level",
           "july_rule": "July rule",
           "august_rule": "August rule",
@@ -69,10 +70,11 @@
       },
       "vacations": {
         "title": "School vacations",
-        "description": "Modify school zone and custody rules during vacations. Vacations take priority over regular custody.",
+        "description": "Modify school zone and custody rules during vacations. Vacations take priority over regular custody. Current year parity determines the applicable half.",
         "data": {
           "zone": "School zone",
           "reference_year": "Reference year for vacations (even/odd)",
+          "vacation_split_mode": "Half split (even/odd years)",
           "school_level": "School level",
           "july_rule": "July rule",
           "august_rule": "August rule",
