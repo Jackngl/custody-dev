@@ -19,6 +19,7 @@ from .const import (
     CONF_CALENDAR_SYNC,
     CONF_CALENDAR_TARGET,
     CONF_CALENDAR_SYNC_DAYS,
+    CONF_CALENDAR_SYNC_INTERVAL_HOURS,
     CONF_CHILD_NAME,
     CONF_CHILD_NAME_DISPLAY,
     CONF_CUSTODY_TYPE,
@@ -481,6 +482,14 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         min=7, max=365, mode=selector.NumberSelectorMode.BOX, step=1
                     )
                 ),
+                vol.Optional(
+                    CONF_CALENDAR_SYNC_INTERVAL_HOURS,
+                    default=data.get(CONF_CALENDAR_SYNC_INTERVAL_HOURS, 1),
+                ): selector.NumberSelector(
+                    selector.NumberSelectorConfig(
+                        min=1, max=24, mode=selector.NumberSelectorMode.BOX, step=1
+                    )
+                ),
                 vol.Optional(CONF_EXCEPTIONS, default=data.get(CONF_EXCEPTIONS, "")): cv.string,
                 vol.Optional(
                     CONF_HOLIDAY_API_URL,
@@ -703,6 +712,14 @@ class CustodyScheduleOptionsFlow(config_entries.OptionsFlow):
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
                         min=7, max=365, mode=selector.NumberSelectorMode.BOX, step=1
+                    )
+                ),
+                vol.Optional(
+                    CONF_CALENDAR_SYNC_INTERVAL_HOURS,
+                    default=data.get(CONF_CALENDAR_SYNC_INTERVAL_HOURS, 1),
+                ): selector.NumberSelector(
+                    selector.NumberSelectorConfig(
+                        min=1, max=24, mode=selector.NumberSelectorMode.BOX, step=1
                     )
                 ),
                 vol.Optional(CONF_EXCEPTIONS, default=data.get(CONF_EXCEPTIONS, "")): cv.string,

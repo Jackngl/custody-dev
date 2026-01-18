@@ -45,6 +45,7 @@
           "calendar_sync": "Enable Google Calendar sync",
           "calendar_target": "Target calendar (Google Calendar)",
           "calendar_sync_days": "Sync window (days)",
+          "calendar_sync_interval_hours": "Sync interval (hours)",
           "exceptions": "Custom exceptions"
         }
       }
@@ -102,6 +103,7 @@
           "calendar_sync": "Enable Google Calendar sync",
           "calendar_target": "Target calendar (Google Calendar)",
           "calendar_sync_days": "Sync window (days)",
+          "calendar_sync_interval_hours": "Sync interval (hours)",
           "exceptions": "Custom exceptions"
         }
       }

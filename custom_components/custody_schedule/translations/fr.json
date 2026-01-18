@@ -45,6 +45,7 @@
           "calendar_sync": "Activer la synchro Google Calendar",
           "calendar_target": "Calendrier cible (Google Calendar)",
           "calendar_sync_days": "Fenêtre de synchro (jours)",
+          "calendar_sync_interval_hours": "Intervalle de synchro (heures)",
           "exceptions": "Exceptions personnalisées"
         }
       }
@@ -102,6 +103,7 @@
           "calendar_sync": "Activer la synchro Google Calendar",
           "calendar_target": "Calendrier cible (Google Calendar)",
           "calendar_sync_days": "Fenêtre de synchro (jours)",
+          "calendar_sync_interval_hours": "Intervalle de synchro (heures)",
           "exceptions": "Exceptions personnalisées"
         }
       }

@@ -20,6 +20,7 @@ from .const import (
     CONF_CHILD_NAME,
     CONF_CHILD_NAME_DISPLAY,
     CONF_CALENDAR_SYNC,
+    CONF_CALENDAR_SYNC_INTERVAL_HOURS,
     CONF_CALENDAR_SYNC_DAYS,
     CONF_CALENDAR_TARGET,
     CONF_HOLIDAY_API_URL,
@@ -166,12 +167,19 @@ class CustodyScheduleCoordinator(DataUpdateCoordinator[CustodyComputation]):
             return
 
         now = dt_util.now()
-        if self._last_calendar_sync and now - self._last_calendar_sync < timedelta(hours=1):
+        interval_hours = config.get(CONF_CALENDAR_SYNC_INTERVAL_HOURS, 1)
+        try:
+            interval_hours = int(interval_hours)
+        except (TypeError, ValueError):
+            interval_hours = 1
+        interval_hours = max(1, min(24, interval_hours))
+
+        if self._last_calendar_sync and now - self._last_calendar_sync < timedelta(hours=interval_hours):
             return
 
         async with self._calendar_sync_lock:
             now = dt_util.now()
-            if self._last_calendar_sync and now - self._last_calendar_sync < timedelta(hours=1):
+            if self._last_calendar_sync and now - self._last_calendar_sync < timedelta(hours=interval_hours):
                 return
             self._last_calendar_sync = now
             try:
@@ -297,11 +305,35 @@ async def _sync_calendar_events(
                     "summary": summary,
                     "start_date_time": start_val,
                     "end_date_time": end_val,
-                "description": f"{marker} Planning de garde ({window.source})",
+                    "description": f"{marker} Planning de garde ({window.source})",
                     "location": location,
                 },
                 blocking=True,
             )
+        elif hass.services.has_service("calendar", "update_event"):
+            # Update events if metadata changed (location/description)
+            existing = next((ev for ev in existing_events if ev.get("__key") == key), None)
+            if existing:
+                event_id = existing.get("uid") or existing.get("id") or existing.get("event_id")
+                if event_id:
+                    existing_desc = existing.get("description") or ""
+                    existing_loc = existing.get("location") or ""
+                    new_desc = f"{marker} Planning de garde ({window.source})"
+                    if existing_desc != new_desc or existing_loc != location:
+                        await hass.services.async_call(
+                            "calendar",
+                            "update_event",
+                            {
+                                "entity_id": target,
+                                "event_id": event_id,
+                                "summary": summary,
+                                "start_date_time": start_val,
+                                "end_date_time": end_val,
+                                "description": new_desc,
+                                "location": location,
+                            },
+                            blocking=True,
+                        )
 
     # Delete events that no longer exist in the planning
     if hass.services.has_service("calendar", "delete_event"):
