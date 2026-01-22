@@ -550,12 +550,12 @@ Les résultats sont disponibles dans les logs Home Assistant (Paramètres → Sy
 
 
 
-### v1.1 (en cours)
-- [ ] Calendrier avancé avec vue mensuelle
+### v1.1 ✅
+- [x] Calendrier avancé avec vue mensuelle
 - [x] Synchronisation Google Calendar
-- [ ] Notifications natives Home Assistant
+- [x] Notifications natives Home Assistant
 - [x] Gestion d'exceptions avancée
-- [ ] Export PDF du planning
+- [x] Export PDF du planning
 
 ### v1.2 (à venir)
 - [ ] Statistiques (temps passé, répartition)
