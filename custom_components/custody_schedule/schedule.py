@@ -693,15 +693,15 @@ class CustodyScheduleManager:
             )
 
             applied = False
-            # Check for summer break rules (july_rule, august_rule, or summer_rule for quinzaines)
+            # Check for summer break rules (full months via july/august, or quinzaines via summer_rule)
             if self._is_summer_break(holiday):
                 if july_rule:
                     windows.extend(self._summer_windows(holiday, july_rule))
                     applied = True
-                elif august_rule:
+                if august_rule:
                     windows.extend(self._summer_windows(holiday, august_rule))
                     applied = True
-                elif summer_rule and summer_rule in SUMMER_RULES:
+                if not applied and summer_rule and summer_rule in SUMMER_RULES:
                     windows.extend(self._summer_windows(holiday, summer_rule))
                     applied = True
 

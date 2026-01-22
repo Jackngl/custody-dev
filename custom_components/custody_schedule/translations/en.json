@@ -25,14 +25,14 @@
       },
       "vacations": {
         "title": "School vacations",
-        "description": "Configure custody rules during school holidays. Vacations take priority over regular custody. Current year parity determines the applicable half.",
+        "description": "Configure custody rules during school holidays. Vacations take priority over regular custody. Year parity determines the applicable half. For summer, choose either full months (July/August) or fortnights.",
         "data": {
           "zone": "School zone",
           "reference_year_vacations": "Reference year for vacations (even/odd)",
           "vacation_split_mode": "Half split (even/odd years)",
           "school_level": "School level",
-          "july_rule": "July rule",
-          "august_rule": "August rule",
+          "july_rule": "July rule (full month)",
+          "august_rule": "August rule (full month)",
           "summer_rule": "Summer break rule (fortnights)"
         }
       },
@@ -155,14 +155,14 @@
       },
       "vacations": {
         "title": "School vacations",
-        "description": "Modify school zone and custody rules during vacations. Vacations take priority over regular custody. Current year parity determines the applicable half.",
+        "description": "Modify school zone and custody rules during vacations. Vacations take priority over regular custody. Year parity determines the applicable half. For summer, choose either full months (July/August) or fortnights.",
         "data": {
           "zone": "School zone",
           "reference_year_vacations": "Reference year for vacations (even/odd)",
           "vacation_split_mode": "Half split (even/odd years)",
           "school_level": "School level",
-          "july_rule": "July rule",
-          "august_rule": "August rule",
+          "july_rule": "July rule (full month)",
+          "august_rule": "August rule (full month)",
           "summer_rule": "Summer break rule (fortnights)"
         }
       },

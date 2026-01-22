@@ -255,6 +255,21 @@ Pour les règles de partage par moitié, le milieu est calculé automatiquement 
 
 Les règles d'été permettent de configurer spécifiquement les vacances d'été (juillet-août). Elles sont configurées dans le masque de saisie "Vacances scolaires".
 
+### ✅ Choisir entre **mois complets** et **quinzaines**
+
+Pour l'été, vous avez **deux approches distinctes** :
+
+1) **Mois complets** (recommandé si vous partagez juillet/août)
+- Utilisez **`july_rule`** et/ou **`august_rule`**
+- Chaque règle donne **un mois complet** (juillet ou août) selon la parité
+- Vous pouvez **activer l’un, l’autre, ou les deux**
+
+2) **Quinzaines** (partage 1–15 / 16–31)
+- Utilisez **`summer_rule`** (ex: `july_first_half`, `august_second_half`)
+- La moitié est déterminée par **`vacation_split_mode`**
+
+> ⚠️ **Priorité** : si `july_rule` ou `august_rule` est défini, la règle `summer_rule` n’est **pas** utilisée pour l’été.
+
 ### Juillet (années paires) (`july_even`)
 
 **Fonctionnement** :

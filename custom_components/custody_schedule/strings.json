@@ -25,14 +25,14 @@
       },
       "vacations": {
         "title": "Vacances scolaires",
-        "description": "Configurer les règles de garde pendant les vacances scolaires. Les vacances priment sur la garde classique. La parité de l'année en cours détermine la moitié applicable.",
+        "description": "Configurer les règles de garde pendant les vacances scolaires. Les vacances priment sur la garde classique. La parité de l'année détermine la moitié applicable. Pour l'été, choisissez soit des mois complets (juillet/août), soit des quinzaines.",
         "data": {
           "zone": "Zone scolaire",
           "reference_year_vacations": "Année de référence pour les vacances (paire/impaire)",
           "vacation_split_mode": "Répartition des moitiés (paire/impaire)",
           "school_level": "Niveau scolaire",
-          "july_rule": "Règle pour juillet",
-          "august_rule": "Règle pour août",
+          "july_rule": "Règle de juillet (mois complet)",
+          "august_rule": "Règle d'août (mois complet)",
           "summer_rule": "Règle grandes vacances (quinzaines)"
         }
       },
@@ -156,14 +156,14 @@
       },
       "vacations": {
         "title": "Vacances scolaires",
-        "description": "Modifier la zone scolaire et les règles de garde pendant les vacances. Les vacances priment sur la garde classique. La parité de l'année en cours détermine la moitié applicable.",
+        "description": "Modifier la zone scolaire et les règles de garde pendant les vacances. Les vacances priment sur la garde classique. La parité de l'année détermine la moitié applicable. Pour l'été, choisissez soit des mois complets (juillet/août), soit des quinzaines.",
         "data": {
           "zone": "Zone scolaire",
           "reference_year_vacations": "Année de référence pour les vacances (paire/impaire)",
           "vacation_split_mode": "Répartition des moitiés (paire/impaire)",
           "school_level": "Niveau scolaire",
-          "july_rule": "Règle pour juillet",
-          "august_rule": "Règle pour août",
+          "july_rule": "Règle de juillet (mois complet)",
+          "august_rule": "Règle d'août (mois complet)",
           "summer_rule": "Règle grandes vacances (quinzaines)"
         }
       },
