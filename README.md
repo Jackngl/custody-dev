@@ -1,6 +1,6 @@
 # 👨‍👩‍👧‍👦 Planning de garde (Custody Schedule)
 
-![Version](https://img.shields.io/badge/version-1.1.3-blue.svg)
+![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
 ![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2025.12-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-yellow.svg)
 
@@ -557,7 +557,7 @@ Les résultats sont disponibles dans les logs Home Assistant (Paramètres → Sy
 - [x] Gestion d'exceptions avancée
 - [x] Export PDF du planning
 
-### v1.2 (à venir)
+### v1.2 (en cours)
 - [ ] Statistiques (temps passé, répartition)
 - [ ] Internationalisation avancée
 - [ ] Templates Lovelace prêts à l'emploi
