@@ -255,33 +255,31 @@ def _normalize_event_datetime(value: Any) -> str | None:
     if isinstance(value, datetime):
         if value.tzinfo is None:
             value = value.replace(tzinfo=dt_util.DEFAULT_TIME_ZONE)
-        return dt_util.as_local(value).isoformat()
+        return dt_util.as_utc(value).isoformat()
     if isinstance(value, date):
-        return datetime.combine(value, datetime.min.time(), tzinfo=dt_util.DEFAULT_TIME_ZONE).isoformat()
+        return dt_util.as_utc(
+            datetime.combine(value, datetime.min.time(), tzinfo=dt_util.DEFAULT_TIME_ZONE)
+        ).isoformat()
     if isinstance(value, str):
         parsed = dt_util.parse_datetime(value)
         if parsed:
             if parsed.tzinfo is None:
                 parsed = parsed.replace(tzinfo=dt_util.DEFAULT_TIME_ZONE)
-            return dt_util.as_local(parsed).isoformat()
+            return dt_util.as_utc(parsed).isoformat()
         try:
             parsed_date = date.fromisoformat(value)
         except ValueError:
             return None
-        return datetime.combine(parsed_date, datetime.min.time(), tzinfo=dt_util.DEFAULT_TIME_ZONE).isoformat()
+        return dt_util.as_utc(
+            datetime.combine(parsed_date, datetime.min.time(), tzinfo=dt_util.DEFAULT_TIME_ZONE)
+        ).isoformat()
     return None
 
 
 def _ensure_local_tz(value: datetime) -> datetime:
     if value.tzinfo is None:
         value = value.replace(tzinfo=dt_util.DEFAULT_TIME_ZONE)
-    return dt_util.as_local(value)
-
-
-def _ensure_local_tz(value: datetime) -> datetime:
-    if value.tzinfo is None:
-        value = value.replace(tzinfo=dt_util.DEFAULT_TIME_ZONE)
-    return dt_util.as_local(value)
+    return dt_util.as_utc(value)
 
 
 def _calendar_marker(entry_id: str) -> str:
@@ -319,8 +317,8 @@ async def _sync_calendar_events(
     except (TypeError, ValueError):
         days = 120
     days = max(7, min(365, days))
-    start_range = now - timedelta(days=1)
-    end_range = now + timedelta(days=days)
+    start_range = _ensure_local_tz(now - timedelta(days=1))
+    end_range = _ensure_local_tz(now + timedelta(days=days))
 
     response = await hass.services.async_call(
         "calendar",
