@@ -42,6 +42,7 @@ from .const import (
     SERVICE_TEST_HOLIDAY_API,
     SERVICE_EXPORT_EXCEPTIONS,
     SERVICE_IMPORT_EXCEPTIONS,
+    SERVICE_PURGE_CALENDAR,
     UPDATE_INTERVAL,
 )
 from .schedule import CustodyComputation, CustodyScheduleManager
