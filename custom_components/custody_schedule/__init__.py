@@ -17,7 +17,6 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
-from homeassistant.components import persistent_notification
 
 from .const import (
     CONF_CHILD_NAME,
@@ -30,7 +29,6 @@ from .const import (
     CONF_EXCEPTIONS_RECURRING,
     CONF_HOLIDAY_API_URL,
     CONF_LOCATION,
-    CONF_NOTIFICATIONS,
     CONF_REFERENCE_YEAR,
     CONF_REFERENCE_YEAR_CUSTODY,
     CONF_REFERENCE_YEAR_VACATIONS,
@@ -44,7 +42,6 @@ from .const import (
     SERVICE_TEST_HOLIDAY_API,
     SERVICE_EXPORT_EXCEPTIONS,
     SERVICE_IMPORT_EXCEPTIONS,
-    SERVICE_EXPORT_PLANNING_PDF,
     UPDATE_INTERVAL,
 )
 from .schedule import CustodyComputation, CustodyScheduleManager
@@ -144,8 +141,6 @@ class CustodyScheduleCoordinator(DataUpdateCoordinator[CustodyComputation]):
 
         last = self._last_state
         child_label = self.entry.data.get(CONF_CHILD_NAME_DISPLAY, self.entry.data.get(CONF_CHILD_NAME))
-        config = {**self.entry.data, **(self.entry.options or {})}
-        notifications_enabled = bool(config.get(CONF_NOTIFICATIONS))
         if last.is_present != new_state.is_present:
             event = "custody_arrival" if new_state.is_present else "custody_departure"
             self.hass.bus.async_fire(
@@ -158,22 +153,6 @@ class CustodyScheduleCoordinator(DataUpdateCoordinator[CustodyComputation]):
                 },
             )
 
-            if notifications_enabled:
-                next_dt = new_state.next_departure if new_state.is_present else new_state.next_arrival
-                next_label = "depart" if new_state.is_present else "arrivee"
-                formatted = (
-                    dt_util.as_local(next_dt).strftime("%d/%m/%Y %H:%M") if next_dt else "inconnu"
-                )
-                title = f"{child_label} - Arrivee" if new_state.is_present else f"{child_label} - Depart"
-                message = f"{child_label} est arrive" if new_state.is_present else f"{child_label} est parti"
-                message = f"{message}. Prochain {next_label}: {formatted}"
-                persistent_notification.async_create(
-                    self.hass,
-                    message,
-                    title,
-                    f"{DOMAIN}_{self.entry.entry_id}_{next_label}",
-                )
-
         if last.current_period != new_state.current_period and new_state.current_period == "vacation":
             self.hass.bus.async_fire(
                 "custody_vacation_start",
@@ -182,17 +161,6 @@ class CustodyScheduleCoordinator(DataUpdateCoordinator[CustodyComputation]):
                     "holiday": new_state.vacation_name,
                 },
             )
-
-            if notifications_enabled:
-                title = f"{child_label} - Vacances"
-                holiday = new_state.vacation_name or "Vacances scolaires"
-                message = f"Debut des vacances: {holiday}"
-                persistent_notification.async_create(
-                    self.hass,
-                    message,
-                    title,
-                    f"{DOMAIN}_{self.entry.entry_id}_vacation_start",
-                )
         elif last.current_period != new_state.current_period and new_state.current_period == "school":
             self.hass.bus.async_fire(
                 "custody_vacation_end",
@@ -202,25 +170,17 @@ class CustodyScheduleCoordinator(DataUpdateCoordinator[CustodyComputation]):
                 },
             )
 
-            if notifications_enabled:
-                title = f"{child_label} - Fin vacances"
-                holiday = last.vacation_name or "Vacances scolaires"
-                message = f"Fin des vacances: {holiday}"
-                persistent_notification.async_create(
-                    self.hass,
-                    message,
-                    title,
-                    f"{DOMAIN}_{self.entry.entry_id}_vacation_end",
-                )
-
     async def _maybe_sync_calendar(self, state: CustodyComputation) -> None:
         """Sync custody windows to an external calendar if enabled."""
         config = {**self.entry.data, **(self.entry.options or {})}
         if not config.get(CONF_CALENDAR_SYNC):
+            LOGGER.debug("Calendar sync disabled for entry %s", self.entry.entry_id)
             return
-        target = config.get(CONF_CALENDAR_TARGET)
+        target = _normalize_calendar_target(config.get(CONF_CALENDAR_TARGET))
         if not target:
+            LOGGER.warning("Calendar sync enabled but no target calendar selected.")
             return
+        LOGGER.debug("Calendar sync target resolved: %s (entry %s)", target, self.entry.entry_id)
 
         now = dt_util.now()
         interval_hours = config.get(CONF_CALENDAR_SYNC_INTERVAL_HOURS, 1)
@@ -231,15 +191,30 @@ class CustodyScheduleCoordinator(DataUpdateCoordinator[CustodyComputation]):
         interval_hours = max(1, min(24, interval_hours))
 
         if self._last_calendar_sync and now - self._last_calendar_sync < timedelta(hours=interval_hours):
+            LOGGER.debug(
+                "Calendar sync skipped (interval). Last sync: %s, interval: %sh",
+                self._last_calendar_sync,
+                interval_hours,
+            )
             return
 
         async with self._calendar_sync_lock:
             now = dt_util.now()
             if self._last_calendar_sync and now - self._last_calendar_sync < timedelta(hours=interval_hours):
+                LOGGER.debug(
+                    "Calendar sync skipped inside lock (interval). Last sync: %s, interval: %sh",
+                    self._last_calendar_sync,
+                    interval_hours,
+                )
                 return
             self._last_calendar_sync = now
             try:
+                if not hass.services.has_service("calendar", "get_events"):
+                    LOGGER.warning("Calendar sync skipped: calendar.get_events not available.")
+                    return
+                LOGGER.debug("Calendar sync starting for %s", target)
                 await _sync_calendar_events(self.hass, target, state, config, self.entry.entry_id)
+                LOGGER.debug("Calendar sync completed for %s", target)
             except Exception as err:
                 LOGGER.warning("Calendar sync failed for %s: %s", target, err)
 
@@ -248,9 +223,37 @@ def _event_key(summary: str, start: str, end: str) -> tuple[str, str, str]:
     return summary, start, end
 
 
-def _normalize_event_datetime(value: Any) -> str | None:
+def _normalize_calendar_target(value: Any) -> str | None:
+    if not value:
+        return None
+    if isinstance(value, str):
+        return value
     if isinstance(value, dict):
-        value = value.get("dateTime") or value.get("date")
+        return value.get("entity_id") or value.get("value") or value.get("id")
+    if isinstance(value, (list, tuple)):
+        for item in value:
+            normalized = _normalize_calendar_target(item)
+            if normalized:
+                return normalized
+    return None
+
+
+def _normalize_event_datetime(value: Any) -> str | None:
+    try:
+        if isinstance(value, dict):
+            value = value.get("dateTime") or value.get("date")
+        elif isinstance(value, str):
+            # Keep raw string for parsing below.
+            pass
+        elif hasattr(value, "get"):
+            try:
+                value = value.get("dateTime") or value.get("date")
+            except Exception:
+                LOGGER.debug("Calendar event datetime get() failed: %s (%s)", value, type(value).__name__)
+                return None
+    except Exception:
+        LOGGER.debug("Calendar event datetime normalization failed: %s (%s)", value, type(value).__name__)
+        return None
     if isinstance(value, datetime):
         return value.isoformat()
     if isinstance(value, date):
@@ -272,6 +275,8 @@ def _calendar_marker(entry_id: str) -> str:
 
 
 def _matches_marker(event: dict[str, Any], marker: str) -> bool:
+    if not isinstance(event, dict):
+        return False
     description = event.get("description") or ""
     if marker and marker in description:
         return True
@@ -314,19 +319,28 @@ async def _sync_calendar_events(
         blocking=True,
         return_response=True,
     )
+    LOGGER.debug("Calendar get_events response type: %s", type(response).__name__)
 
-    events = []
-    if isinstance(response, dict):
+    events: list[Any] = []
+    if isinstance(response, list):
+        events = response
+    elif isinstance(response, dict):
         if "events" in response:
             events = response.get("events") or []
         elif target in response:
-            events = response.get(target) or []
+            target_payload = response.get(target)
+            if isinstance(target_payload, dict) and "events" in target_payload:
+                events = target_payload.get("events") or []
+            elif isinstance(target_payload, list):
+                events = target_payload
 
     marker = _calendar_marker(entry_id)
 
     existing_keys: set[tuple[str, str, str]] = set()
     existing_events: list[dict[str, Any]] = []
     for event in events:
+        if not isinstance(event, dict):
+            continue
         if marker and not _matches_marker(event, marker):
             continue
         summary = event.get("summary") or event.get("message") or ""
@@ -337,11 +351,14 @@ async def _sync_calendar_events(
         existing_keys.add(_event_key(summary, start_val, end_val))
         event["__key"] = _event_key(summary, start_val, end_val)
         existing_events.append(event)
+    LOGGER.debug("Calendar sync: %d existing events after filtering", len(existing_events))
 
     child_label = config.get(CONF_CHILD_NAME_DISPLAY, config.get(CONF_CHILD_NAME, ""))
     location = config.get(CONF_LOCATION) or ""
 
     desired_keys: set[tuple[str, str, str]] = set()
+    created = 0
+    updated = 0
     for window in state.windows:
         if window.source == "vacation_filter":
             continue
@@ -366,6 +383,7 @@ async def _sync_calendar_events(
                 },
                 blocking=True,
             )
+            created += 1
         elif hass.services.has_service("calendar", "update_event"):
             # Update events if metadata changed (location/description)
             existing = next((ev for ev in existing_events if ev.get("__key") == key), None)
@@ -390,9 +408,11 @@ async def _sync_calendar_events(
                             },
                             blocking=True,
                         )
+                        updated += 1
 
     # Delete events that no longer exist in the planning
     if hass.services.has_service("calendar", "delete_event"):
+        deleted = 0
         for event in existing_events:
             key = event.get("__key")
             if key in desired_keys:
@@ -406,6 +426,14 @@ async def _sync_calendar_events(
                 {"entity_id": target, "event_id": event_id},
                 blocking=True,
             )
+            deleted += 1
+        LOGGER.debug(
+            "Calendar sync summary for %s: created=%d updated=%d deleted=%d",
+            target,
+            created,
+            updated,
+            deleted,
+        )
 
 
 def _migrate_reference_years(
@@ -527,67 +555,6 @@ def _register_services(hass: HomeAssistant) -> None:
         hass.config_entries.async_update_entry(entry, options=options)
         await hass.config_entries.async_reload(entry.entry_id)
 
-    async def _async_handle_export_planning_pdf(call: ServiceCall) -> None:
-        entry_id = call.data["entry_id"]
-        entry = _get_entry(entry_id)
-        coordinator, manager = _get_manager(entry_id)
-        child_label = entry.data.get(CONF_CHILD_NAME_DISPLAY, entry.data.get(CONF_CHILD_NAME))
-        start = call.data.get("start") or dt_util.now()
-        end = call.data.get("end") or (start + timedelta(days=120))
-        if start.tzinfo is None:
-            start = dt_util.as_local(start)
-        if end.tzinfo is None:
-            end = dt_util.as_local(end)
-        if end <= start:
-            raise HomeAssistantError("End date must be after start date")
-
-        state = coordinator.data or await manager.async_calculate(dt_util.now())
-        windows = [w for w in state.windows if w.end > start and w.start < end]
-        windows.sort(key=lambda w: w.start)
-
-        from fpdf import FPDF
-
-        def _pdf_safe(value: str) -> str:
-            return value.encode("latin-1", "replace").decode("latin-1")
-
-        pdf = FPDF()
-        pdf.set_auto_page_break(True, margin=12)
-        pdf.add_page()
-        pdf.set_font("Helvetica", size=14)
-        pdf.cell(0, 10, _pdf_safe(f"Planning de garde - {child_label}"), ln=1)
-        pdf.set_font("Helvetica", size=10)
-        period_line = f"Periode: {start:%d/%m/%Y %H:%M} - {end:%d/%m/%Y %H:%M}"
-        pdf.cell(0, 6, _pdf_safe(period_line), ln=1)
-        pdf.ln(2)
-
-        if not windows:
-            pdf.cell(0, 6, _pdf_safe("Aucun evenement sur la periode."), ln=1)
-        else:
-            for window in windows:
-                label = window.label or "Garde"
-                line = f"{window.start:%d/%m/%Y %H:%M} -> {window.end:%d/%m/%Y %H:%M} | {label}"
-                pdf.multi_cell(0, 5, _pdf_safe(line))
-
-        filename = call.data.get("filename")
-        www_dir = Path(hass.config.path("www")).resolve(strict=False)
-        if filename:
-            filename = str(filename).strip()
-            if filename.startswith("/config/www/"):
-                target = Path(filename)
-            elif filename.startswith("www/"):
-                target = www_dir / filename[4:]
-            else:
-                target = www_dir / filename
-        else:
-            target = www_dir / f"custody_planning_{entry_id}.pdf"
-        target = target.resolve(strict=False)
-        if www_dir not in target.parents and target != www_dir:
-            raise HomeAssistantError("Filename must be under /config/www")
-
-        target.parent.mkdir(parents=True, exist_ok=True)
-        pdf.output(str(target))
-        LOGGER.info("Planning PDF exported to %s", target)
-
     hass.services.async_register(
         DOMAIN,
         SERVICE_SET_MANUAL_DATES,
@@ -653,20 +620,6 @@ def _register_services(hass: HomeAssistant) -> None:
                 vol.Optional("filename"): cv.string,
                 vol.Optional("exceptions"): list,
                 vol.Optional("recurring"): list,
-            }
-        ),
-    )
-
-    hass.services.async_register(
-        DOMAIN,
-        SERVICE_EXPORT_PLANNING_PDF,
-        _async_handle_export_planning_pdf,
-        schema=vol.Schema(
-            {
-                vol.Required("entry_id"): cv.string,
-                vol.Optional("start"): cv.datetime,
-                vol.Optional("end"): cv.datetime,
-                vol.Optional("filename"): cv.string,
             }
         ),
     )
