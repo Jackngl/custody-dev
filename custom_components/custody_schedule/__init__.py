@@ -316,6 +316,34 @@ def _matches_marker(event: dict[str, Any], marker: str) -> bool:
     return "Planning de garde" in description
 
 
+def _extract_event_id(event: dict[str, Any]) -> str | None:
+    raw = event.get("uid") or event.get("id") or event.get("event_id")
+    if isinstance(raw, str) and raw:
+        return raw
+    if isinstance(raw, dict):
+        for key in ("uid", "value", "text", "id"):
+            value = raw.get(key)
+            if isinstance(value, str) and value:
+                return value
+    for key in ("iCalUID", "ical_uid", "iCalUid"):
+        value = event.get(key)
+        if isinstance(value, str) and value:
+            return value
+        if isinstance(value, dict):
+            for nested in ("value", "text", "uid", "id"):
+                nested_val = value.get(nested)
+                if isinstance(nested_val, str) and nested_val:
+                    return nested_val
+    return None
+
+
+def _get_calendar_delete_service(hass: HomeAssistant) -> str | None:
+    for service in ("delete_event", "remove_event"):
+        if hass.services.has_service("calendar", service):
+            return service
+    return None
+
+
 async def _sync_calendar_events(
     hass: HomeAssistant,
     target: str,
@@ -420,7 +448,7 @@ async def _sync_calendar_events(
             # Update events if metadata changed (location/description)
             existing = next((ev for ev in existing_events if ev.get("__key") == key), None)
             if existing:
-                event_id = existing.get("uid") or existing.get("id") or existing.get("event_id")
+                event_id = _extract_event_id(existing)
                 if event_id:
                     existing_desc = existing.get("description") or ""
                     existing_loc = existing.get("location") or ""
@@ -443,18 +471,19 @@ async def _sync_calendar_events(
                         updated += 1
 
     # Delete events that no longer exist in the planning
-    if hass.services.has_service("calendar", "delete_event"):
+    delete_service = _get_calendar_delete_service(hass)
+    if delete_service:
         deleted = 0
         for event in existing_events:
             key = event.get("__key")
             if key in desired_keys:
                 continue
-            event_id = event.get("uid") or event.get("id") or event.get("event_id")
+            event_id = _extract_event_id(event)
             if not event_id:
                 continue
             await hass.services.async_call(
                 "calendar",
-                "delete_event",
+                delete_service,
                 {"entity_id": target, "event_id": event_id},
                 blocking=True,
             )
@@ -480,6 +509,8 @@ async def _sync_calendar_events(
                 "Calendar sync for %s did not require changes (entries already aligned).",
                 target,
             )
+    else:
+        LOGGER.debug("Calendar sync delete skipped for %s: no delete service available.", target)
 
 
 async def _async_purge_calendar_events(
@@ -555,9 +586,12 @@ async def _async_purge_calendar_events(
     deleted = 0
     matched = 0
     missing_id = 0
-    can_delete = hass.services.has_service("calendar", "delete_event")
-    if not can_delete:
-        LOGGER.warning("Calendar purge cannot delete events%s: calendar.delete_event not available", context)
+    delete_service = _get_calendar_delete_service(hass)
+    if not delete_service:
+        LOGGER.warning(
+            "Calendar purge cannot delete events%s: no delete service available on calendar domain",
+            context,
+        )
 
     def _truncate(value: str, limit: int = 120) -> str:
         value = value.replace("\n", " ").strip()
@@ -581,7 +615,7 @@ async def _async_purge_calendar_events(
             continue
         summary = event.get("summary") or event.get("message") or ""
         description = event.get("description") or ""
-        event_id = event.get("uid") or event.get("id") or event.get("event_id")
+        event_id = _extract_event_id(event)
         if summary:
             stats["with_summary"] += 1
         if description:
@@ -626,10 +660,10 @@ async def _async_purge_calendar_events(
                     f"marker={marker_match} legacy={legacy_match} prefix={prefix_match} "
                     f"label={label_match} text={text_match} desc='{_truncate(description)}'"
                 )
-            if can_delete:
+            if delete_service:
                 await hass.services.async_call(
                     "calendar",
-                    "delete_event",
+                    delete_service,
                     {"entity_id": target, "event_id": event_id},
                     blocking=True,
                 )
@@ -661,13 +695,14 @@ async def _async_purge_calendar_events(
         )
     if missing_id:
         LOGGER.info("Purge skipped %d matched events without ids.%s", missing_id, context)
-    if not can_delete and matched:
+    if not delete_service and matched:
         LOGGER.warning(
             "Purge found %d matching events but cannot delete them%s.",
             matched,
             context,
         )
     if debug:
+        calendar_services = hass.services.async_services().get("calendar", {})
         LOGGER.info(
             "Purge debug%s: total=%d summary=%d desc=%d ids=%d marker=%d legacy=%d "
             "prefix=%d label=%d text=%d",
@@ -681,6 +716,12 @@ async def _async_purge_calendar_events(
             stats["prefix"],
             stats["label"],
             stats["text"],
+        )
+        LOGGER.info(
+            "Purge debug%s: delete_service=%s calendar_services=%s",
+            context,
+            delete_service,
+            ", ".join(sorted(calendar_services.keys())) if calendar_services else "none",
         )
         for line in debug_matches:
             LOGGER.info("Purge debug match%s: %s", context, line)
