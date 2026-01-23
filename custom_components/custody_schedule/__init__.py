@@ -984,23 +984,34 @@ def _register_services(hass: HomeAssistant) -> None:
         return entry
 
     async def _async_handle_manual_dates(call: ServiceCall) -> None:
-        coordinator, manager = _get_manager(call.data["entry_id"])
+        entry_id = call.data.get("entry_id")
+        if not entry_id or not isinstance(entry_id, str) or not entry_id.strip():
+            raise HomeAssistantError("entry_id is required and must be a non-empty string")
+        coordinator, manager = _get_manager(entry_id)
         manager.set_manual_windows(call.data["dates"])
         await coordinator.async_request_refresh()
 
     async def _async_handle_override(call: ServiceCall) -> None:
-        coordinator, manager = _get_manager(call.data["entry_id"])
+        entry_id = call.data.get("entry_id")
+        if not entry_id or not isinstance(entry_id, str) or not entry_id.strip():
+            raise HomeAssistantError("entry_id is required and must be a non-empty string")
+        coordinator, manager = _get_manager(entry_id)
         duration = call.data.get("duration")
         duration_td = timedelta(minutes=duration) if duration else None
         manager.override_presence(call.data["state"], duration_td)
         await coordinator.async_request_refresh()
 
     async def _async_handle_refresh(call: ServiceCall) -> None:
-        coordinator, _ = _get_manager(call.data["entry_id"])
+        entry_id = call.data.get("entry_id")
+        if not entry_id or not isinstance(entry_id, str) or not entry_id.strip():
+            raise HomeAssistantError("entry_id is required and must be a non-empty string")
+        coordinator, _ = _get_manager(entry_id)
         await coordinator.async_request_refresh()
 
     async def _async_handle_export_exceptions(call: ServiceCall) -> None:
-        entry_id = call.data["entry_id"]
+        entry_id = call.data.get("entry_id")
+        if not entry_id or not isinstance(entry_id, str) or not entry_id.strip():
+            raise HomeAssistantError("entry_id is required and must be a non-empty string")
         entry = _get_entry(entry_id)
         config = {**entry.data, **(entry.options or {})}
         payload = {
@@ -1029,7 +1040,9 @@ def _register_services(hass: HomeAssistant) -> None:
         LOGGER.info("Exceptions exported to %s", target)
 
     async def _async_handle_import_exceptions(call: ServiceCall) -> None:
-        entry_id = call.data["entry_id"]
+        entry_id = call.data.get("entry_id")
+        if not entry_id or not isinstance(entry_id, str) or not entry_id.strip():
+            raise HomeAssistantError("entry_id is required and must be a non-empty string")
         entry = _get_entry(entry_id)
         payload = None
 
@@ -1074,7 +1087,7 @@ def _register_services(hass: HomeAssistant) -> None:
         _async_handle_manual_dates,
         schema=vol.Schema(
             {
-                vol.Required("entry_id"): cv.string,
+                vol.Required("entry_id"): vol.All(cv.string, vol.Length(min=1)),
                 vol.Required("dates"): vol.All(
                     cv.ensure_list,
                     [
@@ -1097,7 +1110,7 @@ def _register_services(hass: HomeAssistant) -> None:
         _async_handle_override,
         schema=vol.Schema(
             {
-                vol.Required("entry_id"): cv.string,
+                vol.Required("entry_id"): vol.All(cv.string, vol.Length(min=1)),
                 vol.Required("state"): vol.In(["on", "off"]),
                 vol.Optional("duration"): vol.All(vol.Coerce(int), vol.Range(min=1)),
             }
@@ -1108,7 +1121,7 @@ def _register_services(hass: HomeAssistant) -> None:
         DOMAIN,
         SERVICE_REFRESH_SCHEDULE,
         _async_handle_refresh,
-        schema=vol.Schema({vol.Required("entry_id"): cv.string}),
+        schema=vol.Schema({vol.Required("entry_id"): vol.All(cv.string, vol.Length(min=1))}),
     )
 
     hass.services.async_register(
@@ -1117,7 +1130,7 @@ def _register_services(hass: HomeAssistant) -> None:
         _async_handle_export_exceptions,
         schema=vol.Schema(
             {
-                vol.Required("entry_id"): cv.string,
+                vol.Required("entry_id"): vol.All(cv.string, vol.Length(min=1)),
                 vol.Optional("filename"): cv.string,
             }
         ),
@@ -1129,7 +1142,7 @@ def _register_services(hass: HomeAssistant) -> None:
         _async_handle_import_exceptions,
         schema=vol.Schema(
             {
-                vol.Required("entry_id"): cv.string,
+                vol.Required("entry_id"): vol.All(cv.string, vol.Length(min=1)),
                 vol.Optional("filename"): cv.string,
                 vol.Optional("exceptions"): list,
                 vol.Optional("recurring"): list,
@@ -1138,7 +1151,9 @@ def _register_services(hass: HomeAssistant) -> None:
     )
 
     async def _async_handle_purge_calendar(call: ServiceCall) -> None:
-        entry_id = call.data["entry_id"]
+        entry_id = call.data.get("entry_id")
+        if not entry_id or not isinstance(entry_id, str) or not entry_id.strip():
+            raise HomeAssistantError("entry_id is required and must be a non-empty string")
         include_unmarked = bool(call.data.get("include_unmarked", False))
         purge_all = bool(call.data.get("purge_all", False))
         match_text = call.data.get("match_text")
@@ -1165,7 +1180,7 @@ def _register_services(hass: HomeAssistant) -> None:
         _async_handle_purge_calendar,
         schema=vol.Schema(
             {
-                vol.Required("entry_id"): cv.string,
+                vol.Required("entry_id"): vol.All(cv.string, vol.Length(min=1)),
                 vol.Optional("include_unmarked", default=False): cv.boolean,
                 vol.Optional("purge_all", default=False): cv.boolean,
                 vol.Optional("days"): cv.positive_int,
@@ -1182,6 +1197,8 @@ def _register_services(hass: HomeAssistant) -> None:
         year = call.data.get("year")
         
         if entry_id:
+            if not isinstance(entry_id, str) or not entry_id.strip():
+                raise HomeAssistantError("entry_id must be a non-empty string when provided")
             entry_data = hass.data[DOMAIN].get(entry_id)
             if not entry_data:
                 raise HomeAssistantError(f"No custody schedule found for entry_id {entry_id}")
@@ -1219,7 +1236,7 @@ def _register_services(hass: HomeAssistant) -> None:
         _async_handle_test_api,
         schema=vol.Schema(
             {
-                vol.Optional("entry_id"): cv.string,
+                vol.Optional("entry_id"): vol.All(cv.string, vol.Length(min=1)),
                 vol.Optional("zone", default="A"): cv.string,
                 vol.Optional("year"): cv.string,
             }
