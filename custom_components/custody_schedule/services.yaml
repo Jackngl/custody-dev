@@ -85,6 +85,9 @@ purge_calendar_events:
     include_unmarked:
       description: Supprime aussi les événements dont le résumé commence par le nom de l'enfant.
       default: false
+    match_text:
+      description: Supprime les événements contenant ce texte dans le résumé.
+      example: "Sarah-Léa"
     purge_all:
       description: Supprime tous les événements dans la fenêtre sélectionnée (dangereux).
       default: false

@@ -701,6 +701,9 @@ def _register_services(hass: HomeAssistant) -> None:
         marker = _calendar_marker(entry_id)
         child_label = config.get(CONF_CHILD_NAME_DISPLAY, config.get(CONF_CHILD_NAME, ""))
         summary_prefix = f"{child_label} - " if child_label else ""
+        match_text = str(call.data.get("match_text") or "").strip()
+        match_text_lower = match_text.lower() if match_text else ""
+        child_label_lower = child_label.lower() if child_label else ""
         deleted = 0
         matched = 0
         if hass.services.has_service("calendar", "delete_event"):
@@ -709,9 +712,15 @@ def _register_services(hass: HomeAssistant) -> None:
                     continue
                 if not purge_all:
                     matches = marker and _matches_marker(event, marker)
-                    if not matches and include_unmarked and summary_prefix:
+                    if not matches and (include_unmarked or match_text_lower):
                         summary = event.get("summary") or event.get("message") or ""
-                        matches = summary.startswith(summary_prefix)
+                        summary_lower = summary.lower()
+                        if include_unmarked and summary_prefix:
+                            matches = summary.startswith(summary_prefix)
+                        if not matches and include_unmarked and child_label_lower:
+                            matches = child_label_lower in summary_lower
+                        if not matches and match_text_lower:
+                            matches = match_text_lower in summary_lower
                     if not matches:
                         continue
                 matched += 1
@@ -727,12 +736,13 @@ def _register_services(hass: HomeAssistant) -> None:
                 deleted += 1
 
         LOGGER.info(
-            "Purged %d custody events from %s (purge_all=%s, include_unmarked=%s, days=%s)",
+            "Purged %d custody events from %s (purge_all=%s, include_unmarked=%s, days=%s, match_text=%s)",
             deleted,
             target,
             purge_all,
             include_unmarked,
             days,
+            match_text if match_text else None,
         )
         if deleted == 0:
             LOGGER.info(
