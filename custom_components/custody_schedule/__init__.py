@@ -650,10 +650,13 @@ async def _sync_calendar_events(
             continue
         if delete_service:
             try:
+                service_data = {"entity_id": target, "uid": uid}
+                if recurrence_id:
+                    service_data["recurrence_id"] = recurrence_id
                 await hass.services.async_call(
                     "calendar",
                     delete_service,
-                    {"entity_id": target, "event_id": uid},
+                    service_data,
                     blocking=True,
                 )
                 deleted += 1
@@ -866,10 +869,13 @@ async def _async_purge_calendar_events(
                 )
             if delete_service:
                 try:
+                    service_data = {"entity_id": target, "uid": uid}
+                    if recurrence_id:
+                        service_data["recurrence_id"] = recurrence_id
                     await hass.services.async_call(
                         "calendar",
                         delete_service,
-                        {"entity_id": target, "event_id": uid},
+                        service_data,
                         blocking=True,
                     )
                     deleted += 1
