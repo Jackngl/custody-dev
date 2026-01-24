@@ -605,17 +605,24 @@ Les résultats sont disponibles dans les logs Home Assistant (Paramètres → Sy
 - [x] Gestion d'exceptions avancée
 - [x] Export PDF du planning
 
-### v1.2 (en cours)
-- [ ] Statistiques (temps passé, répartition)
-- [ ] Internationalisation avancée
-- [ ] Templates Lovelace prêts à l'emploi
-- [ ] Intégration avec d'autres calendriers
+### v1.4 ✅
+- [x] Optimisation des performances (Synchronisation parallèle)
+- [x] Découpage d'été avancé (Moitiés vs Quinzaines)
+- [x] Traduction française intégrale (Calendrier et Interface)
+- [x] Workflow CI/CD automatisé
+- [x] Résolution des problèmes de stabilité (Version 1.4.12)
 
-### v2.0 (futur)
-- [ ] Mode co-parent avec synchronisation
-- [ ] Application mobile companion
-- [ ] Journal partagé
-- [ ] Gestion financière
+### v1.5 (En cours ⚡)
+- [ ] Statistiques avancées (Temps passé, répartition annuelle)
+- [ ] Export iCal/ICS natif (pour Outlook/Apple/iOS)
+- [ ] Cartes Lovelace prêtes à l'emploi (Dashboard dédié)
+- [ ] Support des jours fériés régionaux (Alsace-Moselle, etc.)
+
+### v2.0 (Vision Future 🌟)
+- [ ] **Mode Co-parent** : Synchronisation entre deux instances Home Assistant
+- [ ] **Gestion financière** : Suivi des frais partagés et pensions
+- [ ] **Journal d'échange** : Notes et photos partagées lors des transitions
+- [ ] **Application compagnon** : Notifications push enrichies avec actions rapides
 
 ## 🤝 Contribution
 
