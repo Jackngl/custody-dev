@@ -79,14 +79,12 @@ L'application supporte **6 types de garde** pour les weekends et semaines :
 - **Valeurs** : Voir [Types de garde disponibles](#types-de-garde-disponibles)
 - **Exemple** : `"alternate_weekend"` pour les weekends des semaines paires/impaires
 
-#### 2. **Année de référence pour la garde classique** (`reference_year_custody`)
-- **Description** : Année de référence pour déterminer la parité (paire ou impaire) pour la garde classique uniquement
+#### 2. **Mon année de garde (parité)** (`reference_year_custody`)
+- **Description** : Détermine si vous avez la garde les années paires ou impaires (pour les week-ends/semaines).
 - **Valeurs** :
-  - `"even"` : Année paire (2024, 2026, ...)
-  - `"odd"` : Année impaire (2025, 2027, ...)
-- **Utilisation** : Détermine quel parent a la garde classique selon la parité de l'année
-- **Exemple** : Si `"odd"` et que nous sommes en 2025 (impaire), vous avez la garde classique
-- **Note** : Ce `reference_year_custody` est **indépendant** du `reference_year_vacations` configuré dans le masque "Vacances scolaires". Chaque masque a son propre champ.
+  - `"Paire"` : Vous avez la garde lors des semaines ISO paires (2024, 2026, ...).
+  - `"Impaire"` : Vous avez la garde lors des semaines ISO impaires (2025, 2027, ...).
+- **Note** : Ce champ calibre l'alternance de base. Les vacances scolaires alternent ensuite automatiquement chaque année à partir de cette base.
 
 #### 3. **Heure d'arrivée** (`arrival_time`)
 - **Description** : Heure à laquelle vous récupérez l'enfant
@@ -102,8 +100,8 @@ L'application supporte **6 types de garde** pour les weekends et semaines :
 
 ### Champs optionnels
 
-#### 5. **Jour de départ du cycle** (`start_day`)
-- **Description** : Jour de la semaine qui marque le début du cycle de garde (semaines/cycles uniquement)
+#### 5. **Jour de départ** (`start_day`)
+- **Description** : Jour marquant le début de votre semaine de garde (généralement le lundi).
 - **Valeurs** : `"monday"`, `"tuesday"`, `"wednesday"`, `"thursday"`, `"friday"`, `"saturday"`, `"sunday"`
 - **Utilisation** : 
   - ✅ **Utilisé pour** : `alternate_week`, `two_two_three`, `two_two_five_five`, `custom`
@@ -551,6 +549,6 @@ Pour toute question sur la configuration de la garde normale :
 
 ---
 
-**Dernière mise à jour** : Version 1.0.99
+**Dernière mise à jour** : Version 1.3.5
 
  

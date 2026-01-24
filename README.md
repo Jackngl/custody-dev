@@ -25,7 +25,8 @@ Intégration Home Assistant pour planifier facilement les gardes alternées, sui
 
 ## ✨ Fonctionnalités principales
 
-- ✅ **Configuration 100% UI** via un flow guidé (enfant ➜ type de garde ➜ vacances ➜ options)
+- ✅ **Configuration simplifiée** : flow guidé avec labels clairs (enfant ➜ garde ➜ vacances ➜ options)
+- ✅ **Calcul intelligent** : alternance automatique des vacances chaque année.
 - ✅ **Calcul automatique** des périodes selon plusieurs rythmes :
   - Semaine alternée (1/1)
   - Week-end alterné
