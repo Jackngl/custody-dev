@@ -64,11 +64,57 @@ def get_french_holidays(year: int, include_alsace_moselle: bool = False) -> set[
     
     return holidays
 
+
+def get_parent_days(year: int) -> dict[str, date]:
+    """Calculate variable dates for French parent holidays (Mother/Father days).
+    
+    Mother's Day: Last Sunday of May (moved to 1st Sunday of June if Pentecost).
+    Father's Day: 3rd Sunday of June.
+    """
+    # Father's day: 3rd Sunday of June
+    first_june = date(year, 6, 1)
+    days_to_first_sunday = (6 - first_june.weekday()) % 7
+    fathers_day = first_june + timedelta(days=days_to_first_sunday + 14)
+    
+    # Mother's day: Last Sunday of May.
+    last_may = date(year, 5, 31)
+    days_back_to_sunday = (last_may.weekday() - 6) % 7
+    mothers_day = last_may - timedelta(days=days_back_to_sunday)
+    
+    # Check for Pentecost (Easter + 49 days)
+    # Re-using logic to calculate Easter locally
+    a = year % 19
+    b = year // 100
+    c = year % 100
+    d = b // 4
+    e = b % 4
+    f = (b + 8) // 25
+    g = (b - f + 1) // 3
+    h = (19 * a + b - d - g + 15) % 30
+    i = c // 4
+    k = c % 4
+    l = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * l) // 451
+    month = (h + l - 7 * m + 114) // 31
+    day = ((h + l - 7 * m + 114) % 31) + 1
+    easter_sunday = date(year, month, day)
+    
+    pentecost_sunday = easter_sunday + timedelta(days=49)
+    if mothers_day == pentecost_sunday:
+        mothers_day = mothers_day + timedelta(days=7)
+        
+    return {
+        "mother": mothers_day,
+        "father": fathers_day
+    }
+
 from .const import (
     ATTR_LOCATION,
     ATTR_NOTES,
     ATTR_ZONE,
     CONF_ALSACE_MOSELLE,
+    CONF_AUTO_PARENT_DAYS,
+    CONF_PARENTAL_ROLE,
     CONF_ARRIVAL_TIME,
     CONF_CUSTOM_RULES,
     CONF_DEPARTURE_TIME,
@@ -346,6 +392,44 @@ class CustodyScheduleManager:
         merged = vacation_display_windows + custom_windows + filtered_pattern_windows
         # Filtrer les fenêtres qui se terminent dans le passé (avec marge d'1 jour pour éviter les problèmes de timing)
         return [window for window in merged if window.end > now - timedelta(days=1)]
+
+    def _build_parental_day_windows(self, now: datetime) -> list[CustodyWindow]:
+        """Automatically create windows for Mother's day and Father's day."""
+        if not self._config.get(CONF_AUTO_PARENT_DAYS, False):
+            return []
+            
+        role = self._config.get(CONF_PARENTAL_ROLE, "none")
+        if role == "none":
+            return []
+            
+        windows = []
+        # Calculate for current and next year to ensure upcoming ones are visible
+        for year in (now.year, now.year + 1):
+            dates = get_parent_days(year)
+            
+            # Mother's Day
+            m_day = dates["mother"]
+            m_start = dt_util.as_local(datetime.combine(m_day, time(0, 0)))
+            m_end = dt_util.as_local(datetime.combine(m_day, time(23, 59, 59)))
+            
+            if role == "mother":
+                # User is Mother -> Force Presence
+                windows.append(CustodyWindow(m_start, m_end, "Fête des mères", "special"))
+            elif role == "father":
+                # User is Father -> Force absence during other parent's day
+                windows.append(CustodyWindow(m_start, m_end, "Fête des mères (Chez l'autre parent)", "vacation_filter"))
+
+            # Father's Day
+            f_day = dates["father"]
+            f_start = dt_util.as_local(datetime.combine(f_day, time(0, 0)))
+            f_end = dt_util.as_local(datetime.combine(f_day, time(23, 59, 59)))
+            
+            if role == "father":
+                windows.append(CustodyWindow(f_start, f_end, "Fête des pères", "special"))
+            elif role == "mother":
+                windows.append(CustodyWindow(f_start, f_end, "Fête des pères (Chez l'autre parent)", "vacation_filter"))
+                
+        return windows
 
     def _build_recurring_windows(self, now: datetime) -> list[CustodyWindow]:
         """Generate recurring exception windows."""

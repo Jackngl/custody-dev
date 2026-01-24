@@ -56,6 +56,8 @@ CONF_EXCEPTIONS_RECURRING = "exceptions_recurring"
 CONF_CUSTOM_RULES = "custom_rules"
 CONF_HOLIDAY_API_URL = "holiday_api_url"
 CONF_ALSACE_MOSELLE = "alsace_moselle"
+CONF_PARENTAL_ROLE = "parental_role"
+CONF_AUTO_PARENT_DAYS = "auto_parent_days"
 
 SERVICE_EXPORT_PLANNING_PDF = "export_planning_pdf"
 

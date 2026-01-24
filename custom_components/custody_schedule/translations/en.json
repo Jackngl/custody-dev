@@ -30,7 +30,9 @@
           "zone": "School zone",
           "vacation_split_mode": "Half split",
           "school_level": "School level",
-          "alsace_moselle": "Enable Alsace-Moselle public holidays (Good Friday, St Stephen's)"
+          "alsace_moselle": "Enable Alsace-Moselle public holidays (Good Friday, St Stephen's)",
+          "parental_role": "My role (Father/Mother)",
+          "auto_parent_days": "Auto-manage Mother's/Father's day"
         }
       },
       "advanced": {

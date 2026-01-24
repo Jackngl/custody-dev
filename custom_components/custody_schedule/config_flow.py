@@ -467,6 +467,21 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Optional(
                     CONF_ALSACE_MOSELLE, default=self._data.get(CONF_ALSACE_MOSELLE, False)
                 ): selector.BooleanSelector(),
+                vol.Required(
+                    CONF_PARENTAL_ROLE, default=self._data.get(CONF_PARENTAL_ROLE, "none")
+                ): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=[
+                            {"value": "none", "label": "Aucun (Désactivé)"},
+                            {"value": "father", "label": "Papa"},
+                            {"value": "mother", "label": "Maman"},
+                        ],
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                ),
+                vol.Optional(
+                    CONF_AUTO_PARENT_DAYS, default=self._data.get(CONF_AUTO_PARENT_DAYS, True)
+                ): selector.BooleanSelector(),
             }
         )
         return self.async_show_form(step_id="vacations", data_schema=schema)
@@ -1023,6 +1038,21 @@ class CustodyScheduleOptionsFlow(config_entries.OptionsFlow):
                 ): _summer_split_selector(),
                 vol.Optional(
                     CONF_ALSACE_MOSELLE, default=data.get(CONF_ALSACE_MOSELLE, False)
+                ): selector.BooleanSelector(),
+                vol.Required(
+                    CONF_PARENTAL_ROLE, default=data.get(CONF_PARENTAL_ROLE, "none")
+                ): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=[
+                            {"value": "none", "label": "Aucun (Désactivé)"},
+                            {"value": "father", "label": "Papa"},
+                            {"value": "mother", "label": "Maman"},
+                        ],
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                ),
+                vol.Optional(
+                    CONF_AUTO_PARENT_DAYS, default=data.get(CONF_AUTO_PARENT_DAYS, True)
                 ): selector.BooleanSelector(),
             }
         )

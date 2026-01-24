@@ -1,6 +1,6 @@
 # 👨‍👩‍👧‍👦 Planning de garde (Custody Schedule)
 
-![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.5.1-blue.svg)
 ![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2025.12-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-yellow.svg)
 
@@ -46,6 +46,7 @@ Intégration Home Assistant pour planifier facilement les gardes alternées, sui
   - Juillet/Août
   - Règles basées sur années paires/impaires
 - ✅ **Règles grandes vacances** (juillet/août avec variantes)
+- ✅ **Gestion auto Fêtes des parents** : inversion automatique pour la Fête des Mères et la Fête des Pères.
 - ✅ **Services** pour exceptions, forcer présence/absence, recalcul
 - ✅ **Événements** Home Assistant pour automatisations
 - ✅ **Support multi-enfants** avec configurations indépendantes
