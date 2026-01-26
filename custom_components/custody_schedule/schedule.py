@@ -235,7 +235,10 @@ class CustodyScheduleManager:
         windows.extend(self._build_recurring_windows(now_local))
         windows.sort(key=lambda window: window.start)
 
-        # Filtrer STRICTEMENT les fenêtres qui se terminent dans le passé
+        # Conserver toutes les fenêtres pour l'affichage (historique)
+        all_windows = list(windows)
+
+        # Filtrer STRICTEMENT les fenêtres qui se terminent dans le passé pour les CALCULS d'état
         # Ne garder que les fenêtres qui se terminent APRÈS maintenant (pas égal, pas proche)
         # Ajouter une marge de 1 minute pour éviter les problèmes de timing
         windows = [w for w in windows if w.end > now_local + timedelta(minutes=1)]
@@ -353,7 +356,7 @@ class CustodyScheduleManager:
             next_vacation_end=next_vacation_end,
             days_until_vacation=days_until_vacation,
             school_holidays_raw=school_holidays_raw,
-            windows=windows,
+            windows=all_windows,
             attributes=attributes,
         )
 
@@ -395,8 +398,8 @@ class CustodyScheduleManager:
         
         # 6. Merge in priority order: vacation windows (highest), then custom, then filtered pattern
         merged = vacation_display_windows + custom_windows + filtered_pattern_windows
-        # Filtrer les fenêtres qui se terminent dans le passé (avec marge d'1 jour pour éviter les problèmes de timing)
-        return [window for window in merged if window.end > now - timedelta(days=1)]
+        # Filtrer les fenêtres qui se terminent dans le passé (avec marge de 365 jours pour l'historique)
+        return [window for window in merged if window.end > now - timedelta(days=365)]
 
     def _build_parental_day_windows(self, now: datetime) -> list[CustodyWindow]:
         """Automatically create windows for Mother's day and Father's day."""
@@ -444,7 +447,7 @@ class CustodyScheduleManager:
 
         windows: list[CustodyWindow] = []
         horizon_end = now.date() + timedelta(days=365)
-        range_start = now.date() - timedelta(days=1)
+        range_start = now.date() - timedelta(days=365)
 
         for item in exceptions:
             try:
@@ -583,7 +586,7 @@ class CustodyScheduleManager:
             # Ajuster le pointer pour commencer avant ou à la date actuelle
             # Si le pointer est trop loin dans le passé, avancer jusqu'à une semaine proche de maintenant
             # On avance de 2 semaines à la fois pour respecter l'alternance
-            while pointer < now - timedelta(days=14):
+            while pointer < now - timedelta(days=365):
                 old_pointer = pointer
                 pointer += timedelta(days=14)  # Sauter 2 semaines (alternance)
                 # Vérifier que le pointer a toujours la bonne parité
@@ -662,7 +665,7 @@ class CustodyScheduleManager:
             # Ajuster le pointer pour commencer avant ou à la date actuelle
             # Si le pointer est trop loin dans le passé, avancer jusqu'à une semaine proche de maintenant
             # On avance de 2 semaines à la fois pour respecter l'alternance
-            while pointer < now - timedelta(days=14):
+            while pointer < now - timedelta(days=365):
                 old_pointer = pointer
                 pointer += timedelta(days=14)  # Sauter 2 semaines (alternance)
                 # Vérifier que le pointer a toujours la bonne parité
