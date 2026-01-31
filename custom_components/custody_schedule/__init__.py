@@ -1388,6 +1388,7 @@ def _register_services(hass: HomeAssistant) -> None:
     async def _async_handle_test_api(call: ServiceCall) -> None:
         """Test the holiday API connection."""
         entry_id = call.data.get("entry_id")
+        country = call.data.get("country")
         zone = call.data.get("zone", "A")
         year = call.data.get("year")
         
@@ -1409,7 +1410,12 @@ def _register_services(hass: HomeAssistant) -> None:
         else:
             holidays = SchoolHolidayClient(hass, api_url)
         
-        result = await holidays.async_test_connection(zone, year)
+        if entry_id and not country:
+            country = config.get(CONF_COUNTRY, DEFAULT_COUNTRY)
+        if not country:
+            country = DEFAULT_COUNTRY
+
+        result = await holidays.async_test_connection(country, zone, year)
         
         # Log the result
         if result["success"]:
@@ -1432,6 +1438,7 @@ def _register_services(hass: HomeAssistant) -> None:
         schema=vol.Schema(
             {
                 vol.Optional("entry_id"): vol.All(cv.string, vol.Length(min=1)),
+                vol.Optional("country"): cv.string,
                 vol.Optional("zone", default="A"): cv.string,
                 vol.Optional("year"): cv.string,
             }

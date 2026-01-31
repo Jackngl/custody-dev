@@ -129,6 +129,7 @@ from .const import (
     CONF_ZONE,
     CONF_COUNTRY,
     CUSTODY_TYPES,
+    DEFAULT_COUNTRY,
 )
 from .school_holidays import SchoolHolidayClient
 
@@ -775,12 +776,9 @@ class CustodyScheduleManager:
 
     async def _generate_vacation_windows(self, now: datetime) -> list[CustodyWindow]:
         """Optional windows driven by vacation rules."""
-        zone = self._config.get(CONF_ZONE)
-        if not zone:
-            return []
-        
+        country = self._config.get(CONF_COUNTRY, DEFAULT_COUNTRY)
         # Fetch holidays without year restriction to get current and next school years
-        holidays = await self._holidays.async_list(zone)
+        holidays = await self._holidays.async_list(country, zone)
         windows: list[CustodyWindow] = []
         # vacation_rule is now automatic based on year parity
         # For all holidays (including summer), use automatic parity logic: 
@@ -1084,12 +1082,9 @@ class CustodyScheduleManager:
 
     async def _determine_period(self, now: datetime) -> tuple[str, str | None]:
         """Return ('school'|'vacation', holiday_name)."""
-        zone = self._config.get(CONF_ZONE)
-        if not zone:
-            return "school", None
-
+        country = self._config.get(CONF_COUNTRY, DEFAULT_COUNTRY)
         # Fetch holidays without year restriction to get current and next school years
-        holidays = await self._holidays.async_list(zone)
+        holidays = await self._holidays.async_list(country, zone)
         for holiday in holidays:
             effective_start, effective_end, _mid = self._effective_holiday_bounds(holiday)
             if effective_start <= now <= effective_end:
@@ -1112,14 +1107,10 @@ class CustodyScheduleManager:
         """
         from .const import LOGGER
         
-        zone = self._config.get(CONF_ZONE)
-        if not zone:
-            LOGGER.warning("No zone configured, cannot fetch school holidays")
-            return None, None, None, None, []
-
+        country = self._config.get(CONF_COUNTRY, DEFAULT_COUNTRY)
         # Fetch holidays without year restriction to get current and next school years
-        LOGGER.debug("Fetching school holidays for zone=%s", zone)
-        holidays = await self._holidays.async_list(zone)
+        LOGGER.debug("Fetching school holidays for country=%s, zone=%s", country, zone)
+        holidays = await self._holidays.async_list(country, zone)
         LOGGER.debug("Retrieved %d holidays from API", len(holidays))
         
         if not holidays:
