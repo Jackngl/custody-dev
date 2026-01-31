@@ -130,6 +130,7 @@ from .const import (
     CONF_COUNTRY,
     CUSTODY_TYPES,
     DEFAULT_COUNTRY,
+    LOGGER,
 )
 from .school_holidays import SchoolHolidayClient
 
@@ -1289,7 +1290,6 @@ class CustodyScheduleManager:
         Returns:
             Adjusted start datetime
         """
-        from .const import LOGGER
         
         if school_level == "primary":
             # Primary: Friday afternoon at departure time
