@@ -379,11 +379,14 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         schema = vol.Schema(
             {
-                vol.Required(CONF_CHILD_NAME): cv.string,
-                vol.Optional(CONF_ICON, default="mdi:account"): selector.IconSelector(),
-                vol.Optional(CONF_PHOTO): cv.string,
-            },
-            extra=vol.ALLOW_EXTRA,
+                vol.Required(CONF_CHILD_NAME): selector.TextSelector(
+                    selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT)
+                ),
+                vol.Optional(CONF_ICON, default="mdi:baby-face-outline"): selector.IconSelector(),
+                vol.Optional(CONF_PHOTO): selector.TextSelector(
+                    selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT)
+                ),
+            }
         )
         return self.async_show_form(step_id="user", data_schema=schema, errors=errors)
 
