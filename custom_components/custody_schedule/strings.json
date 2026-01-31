@@ -245,7 +245,20 @@
         "B": "Zone B — Aix-Marseille, Amiens, Lille, Nancy-Metz, Nantes, Nice, Normandie, Orléans-Tours, Reims, Rennes, Strasbourg",
         "C": "Zone C — Créteil, Montpellier, Paris, Toulouse, Versailles",
         "Corse": "Corse",
-        "DOM-TOM": "DOM-TOM / International"
+        "DOM-TOM": "DOM-TOM / International",
+        "BE-BE": "Belgique — Communauté française",
+        "BE-VLG": "Belgique — Vlaamse Gemeenschap",
+        "BE-BRU": "Belgique — Bruxelles",
+        "CH-GE": "Suisse — Genève",
+        "CH-VD": "Suisse — Vaud",
+        "CH-VS": "Suisse — Valais",
+        "CH-NE": "Suisse — Neuchâtel",
+        "CH-FR": "Suisse — Fribourg",
+        "CH-JU": "Suisse — Jura",
+        "CH-BE": "Suisse — Berne",
+        "CH-ZH": "Suisse — Zurich",
+        "LU": "Luxembourg (National)",
+        "QC": "Québec (Général)"
       }
     }
   }

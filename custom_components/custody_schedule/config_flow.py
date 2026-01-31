@@ -53,6 +53,7 @@ from .const import (
     FRENCH_ZONES_WITH_CITIES,
     HOLIDAY_API,
     REFERENCE_YEARS,
+    SUBDIVISIONS,
     VACATION_SPLIT_MODES,
 )
 
@@ -87,11 +88,25 @@ def _format_child_name(value: str) -> str:
     return " ".join(part.capitalize() for part in normalized.split())
 
 
-def _zone_selector() -> selector.SelectSelector:
-    """Create a zone selector with city labels."""
-    options_list = [
-        {"value": zone, "label": FRENCH_ZONES_WITH_CITIES.get(zone, zone)} for zone in FRENCH_ZONES
-    ]
+def _zone_selector(country: str | None = None) -> selector.SelectSelector:
+    """Create a zone selector with appropriate subdivisions for the country."""
+    options_list = []
+    
+    if country == "FR" or country is None:
+        options_list = [
+            {"value": zone, "label": FRENCH_ZONES_WITH_CITIES.get(zone, zone)} for zone in FRENCH_ZONES
+        ]
+    elif country in SUBDIVISIONS:
+        options_list = [
+            {"value": code, "label": label} for code, label in SUBDIVISIONS[country].items()
+        ]
+    
+    # Fallback to France if nothing found
+    if not options_list:
+        options_list = [
+            {"value": zone, "label": FRENCH_ZONES_WITH_CITIES.get(zone, zone)} for zone in FRENCH_ZONES
+        ]
+
     return selector.SelectSelector(
         selector.SelectSelectorConfig(
             options=options_list,
@@ -488,7 +503,7 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     translation_key="country",
                 )
             ),
-            vol.Required(CONF_ZONE, default=zone_default): _zone_selector(),
+            vol.Required(CONF_ZONE, default=zone_default): _zone_selector(country_default),
             vol.Optional(
                 CONF_SCHOOL_LEVEL, default=self._data.get(CONF_SCHOOL_LEVEL, "primary")
             ): _school_level_selector(),

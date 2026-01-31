@@ -79,6 +79,32 @@ FRENCH_ZONES_WITH_CITIES: dict[str, str] = {
     "DOM-TOM": "DOM-TOM",
 }
 
+# Subdivisions pour les autres pays (OpenHolidays API codes)
+SUBDIVISIONS: dict[str, dict[str, str]] = {
+    "BE": {
+        "BE-BE": "Communauté française",
+        "BE-VLG": "Vlaamse Gemeenschap",
+        "BE-BRU": "Bruxelles",
+    },
+    "CH": {
+        "CH-GE": "Genève",
+        "CH-VD": "Vaud",
+        "CH-VS": "Valais",
+        "CH-NE": "Neuchâtel",
+        "CH-FR": "Fribourg",
+        "CH-JU": "Jura",
+        "CH-BE": "Berne",
+        "CH-ZH": "Zurich",
+        # ... autres cantons peuvent être ajoutés
+    },
+    "LU": {
+        "LU": "Luxembourg (National)",
+    },
+    "CA_QC": {
+        "QC": "Québec (Général)",
+    },
+}
+
 
 
 CUSTODY_TYPES = {
