@@ -50,6 +50,7 @@ from .const import (
 )
 from .schedule import CustodyComputation, CustodyScheduleManager
 from .school_holidays import SchoolHolidayClient
+from .intent import async_setup_intents
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -57,6 +58,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.data.setdefault(DOMAIN, {})
     if not hass.data[DOMAIN].get("services_registered"):
         _register_services(hass)
+        await async_setup_intents(hass)
         hass.data[DOMAIN]["services_registered"] = True
     return True
 

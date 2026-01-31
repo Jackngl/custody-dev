@@ -1,6 +1,6 @@
 # 👨‍👩‍👧‍👦 Custody (Custody Schedule)
 
-![Version](https://img.shields.io/badge/version-1.5.12-blue.svg)
+![Version](https://img.shields.io/badge/version-1.8.0-blue.svg)
 ![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2025.12-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-yellow.svg)
 
@@ -599,6 +599,31 @@ automation:
           preset_mode: "comfort"
 ```
 
+---
+
+## 🎙️ Assistants Vocaux (Alexa & Assist)
+
+La version 1.7.0 introduit un support optimisé pour les assistants vocaux.
+
+### 1. Amazon Alexa (Annonce Automatique)
+Vous pouvez maintenant utiliser un **Blueprint** pour qu'Alexa annonce automatiquement les changements de garde sur vos enceintes (Echo, Dot, etc.).
+
+**Configuration :**
+1. Téléchargez le fichier `alexa_custody_announcement.yaml` depuis le dossier `blueprints`.
+2. Placez-le dans votre dossier `/config/blueprints/automation/`.
+3. Allez dans **Paramètres** -> **Automatisations et scènes** -> **Blueprints**.
+4. Créez une automatisation à partir du modèle "Annonce Alexa - Changement de Garde".
+
+### 2. Home Assistant Assist (Voix native)
+Grâce à la classe d'appareil `presence` sur les capteurs binaires, vous pouvez poser des questions naturelles à Assist :
+- *"Est-ce que Lucas est présent ?"*
+- *"Quel est le statut de présence de Lucas ?"*
+
+> [!TIP]
+> Pour une meilleure expérience avec Alexa, assurez-vous d'exposer l'entité `binary_sensor.<nom>_presence` via Nabu Casa ou votre intégration manuelle Alexa.
+
+---
+
 ## 🌐 API des vacances scolaires
 
 L'intégration utilise l'API officielle du ministère de l'Éducation nationale (`data.education.gouv.fr`) pour récupérer automatiquement les dates des vacances scolaires.
@@ -665,16 +690,24 @@ Les résultats sont disponibles dans les logs Home Assistant (Paramètres → Sy
 - [x] Localisation française intégrale
 - [x] Nettoyage automatique des logs de démarrage
 
-### v1.6 (En cours ⚡)
-- [ ] Statistiques avancées (Temps passé, répartition annuelle)
-- [ ] Export iCal/ICS natif (pour Outlook/Apple/iOS)
-- [ ] Notifications push enrichies avec actions rapides
+### v1.7 ✅
+- [x] **Support Vocal** : Support optimisé pour **Amazon Alexa**
+- [x] **Blueprints** : Ajout du premier modèle d'annonce Alexa
+- [x] **Raffinements Assist** : Phrases personnalisées ("Qui a Lucas ?")
+
+### v1.8 (En cours ⚡)
+- [x] **Support Billingue** : Traductions intégrales Français / Anglais
+- [ ] **Ouverture Internationale** : Support des calendriers scolaires pour Belgique, Suisse, Luxembourg et Québec
+- [ ] **Détection de langue** : Adaptation automatique selon la configuration HA
+
+### v1.9
+- [ ] **Mode "Échange Rapide"** : Bouton de confirmation d'échange avec notification au co-parent et log historique
+- [ ] **Dashboard "One-tap Override"** : Gérer les imprévus (retards, dodo supplémentaire) en un clic
 
 ### v2.0 (Vision Future 🌟)
 - [ ] **Mode Co-parent** : Synchronisation entre deux instances Home Assistant
 - [ ] **Gestion financière** : Suivi des frais partagés et pensions
 - [ ] **Journal d'échange** : Notes et photos partagées lors des transitions
-- [ ] **Application compagnon** : Notifications push enrichies avec actions rapides
 
 ## 🤝 Contribution
 
@@ -692,8 +725,8 @@ Pour développer localement :
 
 ```bash
 # Cloner le dépôt
-git clone https://github.com/Jackngl/custody-v1.git
-cd custody-v1
+git clone https://github.com/Jackngl/custody.git
+cd custody
 
 # Installer dans Home Assistant
 cp -r custom_components/custody_schedule /config/custom_components/
@@ -728,7 +761,7 @@ Merci à :
 
 ## 📞 Support
 
-- **Issues** : [GitHub Issues](https://github.com/Jackngl/custody-v1/issues)
+- **Issues** : [GitHub Issues](https://github.com/Jackngl/custody/issues)
 - **Documentation** : Ce README
 - **Logs** : Vérifiez les logs Home Assistant pour diagnostiquer les problèmes
 
