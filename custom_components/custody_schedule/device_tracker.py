@@ -7,6 +7,7 @@ from typing import Any
 from homeassistant.components.device_tracker import TrackerEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -35,9 +36,10 @@ async def async_setup_entry(
 
 
 class CustodyDeviceTracker(CoordinatorEntity[CustodyComputation], TrackerEntity):
-    """Device tracker basé sur la présence de l'enfant."""
+    """Device tracker based on child presence."""
 
-    _attr_has_entity_name = False
+    _attr_has_entity_name = True
+    _attr_translation_key = "tracker"
 
     def __init__(
         self,
@@ -48,10 +50,14 @@ class CustodyDeviceTracker(CoordinatorEntity[CustodyComputation], TrackerEntity)
         """Initialize the device tracker."""
         super().__init__(coordinator)
         self._entry = entry
-        self._attr_name = f"{child_name} Suivi"
         self._attr_unique_id = f"{entry.entry_id}_device_tracker"
-        self._attr_device_info = None
-        self._attr_entity_description = "Dispositif de suivi basé sur la présence de l'enfant (garde classique ou vacances scolaires)"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, entry.entry_id)},
+            name=child_name,
+            manufacturer="Custody",
+            model="Custody Planning",
+            sw_version=entry.version if hasattr(entry, "version") else "1.8.7",
+        )
         photo = entry.data.get(CONF_PHOTO)
         if photo:
             self._attr_entity_picture = photo
@@ -63,14 +69,12 @@ class CustodyDeviceTracker(CoordinatorEntity[CustodyComputation], TrackerEntity)
         if not data:
             return "not_home"
         
-        # Si l'enfant est en garde, il est "home"
-        # Sinon, il est "not_home"
         return "home" if data.is_present else "not_home"
 
     @property
     def source_type(self) -> str:
         """Return the source type of the device tracker."""
-        return "gps"  # Utilisé pour les device trackers basés sur la logique
+        return "gps"
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
