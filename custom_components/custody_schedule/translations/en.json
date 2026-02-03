@@ -139,6 +139,11 @@
           "exception_id": "Recurring exception"
         }
       }
+    },
+    "error": {
+      "invalid_local_photo": "Use a URL, media source, or place the file under /config/www so it is available as /local/...",
+      "invalid_child_name": "Enter at least one letter or digit (accents will be stripped automatically).",
+      "calendar_target_required": "Select a target calendar for synchronization."
     }
   },
   "entity": {
@@ -176,14 +181,6 @@
         "name": "Days until vacations (Custody)"
       }
     }
-  },
-  "error": {
-    "invalid_local_photo": "Use a URL, media source, or place the file under /config/www so it is available as /local/...",
-    "invalid_child_name": "Enter at least one letter or digit (accents will be stripped automatically).",
-    "calendar_target_required": "Select a target calendar for synchronization.",
-    "end_before_start": "End must be after start.",
-    "invalid_weekday": "Select a valid weekday.",
-    "no_exceptions": "No exceptions available."
   },
   "options": {
     "step": {
@@ -254,6 +251,12 @@
           "exceptions": "Custom exceptions"
         }
       }
+    },
+    "error": {
+      "calendar_target_required": "Select a target calendar for synchronization.",
+      "end_before_start": "End must be after start.",
+      "invalid_weekday": "Select a valid weekday.",
+      "no_exceptions": "No exceptions available."
     }
   },
   "selector": {

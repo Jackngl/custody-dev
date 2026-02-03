@@ -422,9 +422,9 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         # Only show start_day for custody types that use it
         if show_start_day:
-            schema_dict[
-                vol.Required(CONF_START_DAY, default=self._data.get(CONF_START_DAY, "monday"))
-            ] = _start_day_selector()
+            schema_dict[vol.Required(CONF_START_DAY, default=self._data.get(CONF_START_DAY, "monday"))] = (
+                _start_day_selector()
+            )
 
         return self.async_show_form(
             step_id="custody",
@@ -657,9 +657,9 @@ class CustodyScheduleOptionsFlow(config_entries.OptionsFlow):
 
         # Only show start_day for custody types that use it
         if show_start_day:
-            schema_dict[
-                vol.Required(CONF_START_DAY, default=data.get(CONF_START_DAY, "monday"))
-            ] = _start_day_selector()
+            schema_dict[vol.Required(CONF_START_DAY, default=data.get(CONF_START_DAY, "monday"))] = (
+                _start_day_selector()
+            )
 
         schema = vol.Schema(schema_dict)
         return self.async_show_form(
