@@ -422,9 +422,9 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         # Only show start_day for custody types that use it
         if show_start_day:
-            schema_dict[vol.Required(CONF_START_DAY, default=self._data.get(CONF_START_DAY, "monday"))] = (
-                _start_day_selector()
-            )
+            schema_dict[
+                vol.Required(CONF_START_DAY, default=self._data.get(CONF_START_DAY, "monday"))
+            ] = _start_day_selector()
 
         return self.async_show_form(
             step_id="custody",
@@ -446,7 +446,6 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # Get existing pattern if any
         existing = self._data.get(CONF_CUSTOM_PATTERN, "").split(",")
         for i in range(1, 15):
-
             default = existing[i - 1] == "on" if len(existing) >= i else False
             schema_dict[vol.Optional(f"day_{i}", default=default)] = selector.BooleanSelector()
 
@@ -657,9 +656,9 @@ class CustodyScheduleOptionsFlow(config_entries.OptionsFlow):
 
         # Only show start_day for custody types that use it
         if show_start_day:
-            schema_dict[vol.Required(CONF_START_DAY, default=data.get(CONF_START_DAY, "monday"))] = (
-                _start_day_selector()
-            )
+            schema_dict[
+                vol.Required(CONF_START_DAY, default=data.get(CONF_START_DAY, "monday"))
+            ] = _start_day_selector()
 
         schema = vol.Schema(schema_dict)
         return self.async_show_form(
@@ -682,7 +681,6 @@ class CustodyScheduleOptionsFlow(config_entries.OptionsFlow):
         # Get existing pattern if any
         existing = (self._data.get(CONF_CUSTOM_PATTERN) or "").split(",")
         for i in range(1, 15):
-
             default = existing[i - 1] == "on" if len(existing) >= i else False
             schema_dict[vol.Optional(f"day_{i}", default=default)] = selector.BooleanSelector()
 
