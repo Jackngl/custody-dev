@@ -155,11 +155,11 @@ Depuis la version 1.3.0, la purge utilise une méthode d'accès direct aux entit
 ### Comment lancer une purge manuelle
 
 1. Allez dans **Outils de développement** -> **Actions** (ou Services).
-2. Sélectionnez l'action `Custody: Purger le calendrier`.
+2. Sélectionnez l'action `Custody: Purger les événements Google` (service `custody_schedule.purge_calendar_events`).
 3. Passez en **mode YAML** et utilisez le modèle suivant :
 
 ```yaml
-action: custody_schedule.purge_calendar
+action: custody_schedule.purge_calendar_events
 data:
   entry_id: "VOTRE_ENTRY_ID"
   days: 120
@@ -334,7 +334,7 @@ data:
   filename: "custody_exceptions.json"
 ```
 
-### `custody_schedule.purge_calendar`
+### `custody_schedule.purge_calendar_events`
 
 Supprime manuellement les événements du calendrier. Cette méthode est capable d'identifier les événements créés par Custody même lorsqu'ils sont orphelins ou dupliqués grâce à une lecture directe des index du calendrier.
 
@@ -347,7 +347,7 @@ Supprime manuellement les événements du calendrier. Cette méthode est capable
 
 **Exemple :**
 ```yaml
-action: custody_schedule.purge_calendar
+action: custody_schedule.purge_calendar_events
 data:
   entry_id: "01KF1ZW5K8JNX55258QBCF1STF"
   debug: true
@@ -400,7 +400,7 @@ Pour chaque enfant configuré, les entités suivantes sont créées automatiquem
 | Entité | Type | Description |
 |--------|------|-------------|
 | `binary_sensor.<nom>_presence` | Binary Sensor | État présent/absent (`on`/`off`) |
-| `device_tracker.<nom>_suivi` | Device Tracker | Suivi de présence (`home`/`not_home`) |
+| `device_tracker.<nom>_tracker` | Device Tracker | Suivi de présence (`home`/`not_home`) |
 | `sensor.<nom>_next_arrival` | Sensor | Prochaine arrivée (datetime) |
 | `sensor.<nom>_next_departure` | Sensor | Prochain départ (datetime) |
 | `sensor.<nom>_days_remaining` | Sensor | Jours restants avant prochain changement |
@@ -412,7 +412,7 @@ Pour chaque enfant configuré, les entités suivantes sont créées automatiquem
 
 **Note :** `<nom>` correspond au nom de l'enfant en minuscules avec les espaces remplacés par des underscores. Par exemple, pour un enfant nommé "Lucas", les entités seront :
 - `binary_sensor.lucas_presence`
-- `device_tracker.lucas_suivi`
+- `device_tracker.lucas_tracker`
 - `sensor.lucas_next_arrival`
 - etc.
 

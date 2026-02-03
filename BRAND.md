@@ -4,9 +4,11 @@ Pour que le logo s'affiche dans l'interface Home Assistant (pas seulement dans H
 
 ## Fichiers disponibles
 
-- `custom_components/custody_schedule/icon.svg` - Icône SVG pour l'intégration
-- `custom_components/custody_schedule/logo.svg` - Logo SVG pour l'intégration
-- `icon.svg` - Icône à la racine pour HACS
+- `custom_components/custody_schedule/icon.png` - Icône PNG pour l'intégration (256×256)
+- `custom_components/custody_schedule/logo.png` - Logo PNG pour l'intégration
+- `custom_components/custody_schedule/icon.svg.bak` - Fichier source SVG de l’icône (à convertir en PNG si besoin)
+- `custom_components/custody_schedule/logo.svg.bak` - Fichier source SVG du logo (à convertir en PNG si besoin)
+- `icon.png` - Icône à la racine pour HACS
 
 ## Soumettre le logo au dépôt brands
 

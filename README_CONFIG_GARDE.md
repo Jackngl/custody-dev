@@ -549,6 +549,6 @@ Pour toute question sur la configuration de la garde normale :
 
 ---
 
-**Dernière mise à jour** : Version 1.5.4
+**Dernière mise à jour** : Version 1.8.x (alignée avec l’intégration Custody)
 
  

@@ -23,7 +23,7 @@ L'intégration **Custody** crée automatiquement plusieurs entités pour chaque 
 - **1 Device Tracker** : Suivi de présence (utilisable dans l'entité Personne)
 - **7 Sensors** : Informations détaillées sur la garde et les vacances
 
-Toutes les entités sont préfixées par le nom de l'enfant pour faciliter l'identification.
+Toutes les entités sont préfixées par le **slug du prénom de l’enfant** : minuscules, espaces remplacés par des underscores (ex. « Sarah-Léa » → `sarah_lea`). Remplacez `{enfant}` dans les exemples par ce slug.
 
 ---
 
@@ -87,8 +87,8 @@ Calendrier complet affichant tous les événements de garde (weekends/semaines e
 
 ### 3. Device Tracker : Suivi de présence
 
-**Nom de l'entité** : `device_tracker.{enfant}_suivi`  
-**Nom affiché** : `{Enfant} Suivi`
+**Nom de l'entité** : `device_tracker.{enfant}_tracker`  
+**Nom affiché** : `{Enfant} Tracker` (ou « {Enfant} Suivi » en français selon la langue de l’interface)
 
 #### Description
 Dispositif de suivi basé sur la présence de l'enfant (garde classique ou vacances scolaires). Cette entité peut être utilisée dans l'entité **Personne** de Home Assistant pour créer un suivi de présence complet.
@@ -113,7 +113,7 @@ Dispositif de suivi basé sur la présence de l'enfant (garde classique ou vacan
 1. Aller dans **Paramètres** → **Personnes et zones**
 2. Cliquer sur **Créer une personne**
 3. Nommer la personne (ex: "Sarah-Léa")
-4. Dans **Dispositifs de suivi**, sélectionner `device_tracker.{enfant}_suivi`
+4. Dans **Dispositifs de suivi**, sélectionner `device_tracker.{enfant}_tracker`
 5. Ajouter une photo si souhaité
 6. Sauvegarder
 
@@ -189,10 +189,10 @@ Nombre de jours restants avant le prochain changement de garde.
 #### Description
 Période actuelle (garde classique, vacances scolaires, ou aucune).
 
-#### États possibles
-- `"Garde classique"` : Période de garde normale (weekends/semaines)
-- `"Vacances scolaires"` : Période de vacances scolaires
-- `"Aucune"` : Aucune période de garde en cours
+#### États possibles (valeurs brutes de l’entité)
+- `"school"` : Période hors vacances (garde classique : weekends/semaines)
+- `"vacation"` : Période de vacances scolaires
+- `None` ou vide : Aucune période de garde en cours (cas rare)
 
 #### Utilisation
 - **Dashboard** : Afficher le type de période actuelle
@@ -209,12 +209,8 @@ Période actuelle (garde classique, vacances scolaires, ou aucune).
 Nom des prochaines vacances scolaires à venir.
 
 #### États possibles
-- `"Vacances de Noël"` : Vacances de Noël
-- `"Vacances d'Hiver"` : Vacances d'hiver
-- `"Vacances de Printemps"` : Vacances de printemps
-- `"Vacances de la Toussaint"` : Vacances de la Toussaint
-- `"Vacances d'Été"` : Vacances d'été
-- `"Aucune"` : Aucune vacance programmée
+- Valeurs retournées par l’API des vacances scolaires (ex. `"Vacances de Noël"`, `"Vacances d'Hiver"`, `"Vacances de Printemps"`, `"Vacances de la Toussaint"`, `"Vacances d'Été"`).
+- `unknown` ou vide : Aucune prochaine vacance programmée ou zone non configurée.
 
 #### Utilisation
 - **Dashboard** : Afficher le nom des prochaines vacances
@@ -458,7 +454,7 @@ description: "Active un mode spécial pendant les vacances scolaires"
 trigger:
   - platform: state
     entity_id: sensor.{enfant}_current_period
-    to: 'Vacances scolaires'
+    to: 'vacation'
 action:
   - service: input_select.select_option
     target:
@@ -503,7 +499,7 @@ Toutes les entités partagent des attributs communs accessibles via `{{ state_at
 ### Attributs de base
 - `child_name` : Nom de l'enfant
 - `custody_type` : Type de garde classique (ex: `alternate_week`, `alternate_weekend`)
-- `current_period` : Période actuelle (`Garde classique`, `Vacances scolaires`, `Aucune`)
+- `current_period` : Période actuelle — valeurs brutes : `school` (hors vacances), `vacation` (vacances scolaires), ou vide
 
 ### Attributs de dates
 - `next_arrival` : Prochaine arrivée (ISO format)
@@ -556,7 +552,7 @@ Toutes les entités partagent des attributs communs accessibles via `{{ state_at
 
 ### Les dates sont incorrectes
 1. Vérifiez la configuration de la zone scolaire
-2. Vérifiez que `reference_year` est correctement configuré
+2. Vérifiez que `reference_year_custody` (garde classique) et la répartition des vacances sont correctement configurés
 3. Vérifiez les horaires d'arrivée/départ
 
 ### Les vacances ne s'affichent pas
@@ -576,19 +572,19 @@ Toutes les entités partagent des attributs communs accessibles via `{{ state_at
 
 ## ✅ Récapitulatif des entités
 
-| Type | Nom | Description | Utilisation principale |
-|------|-----|-------------|------------------------|
-| Binary Sensor | `{Enfant} Présence` | Statut de présence | Indicateur visuel, automations |
-| Calendar | `{Enfant} Calendrier` | Calendrier complet | Vue calendrier, planification |
-| Device Tracker | `{Enfant} Suivi` | Présence/Absence | Personnes, zones, automations |
-| Sensor | `{Enfant} Prochaine arrivée` | Date/heure arrivée | Notifications, préparations |
-| Sensor | `{Enfant} Prochain départ` | Date/heure départ | Notifications, préparations |
-| Sensor | `{Enfant} Jours restants` | Jours avant changement | Compteurs, alertes |
-| Sensor | `{Enfant} Période actuelle` | Type de période | Adaptations de comportement |
-| Sensor | `{Enfant} Prochaines vacances` | Nom des vacances | Informations, planification |
-| Sensor | `{Enfant} Date des prochaines vacances` | Date de début | Planification, affichage |
-| Sensor | `{Enfant} Jours jusqu'aux vacances` | Jours avant vacances | Compteurs, préparations |
+| Type | Entity ID | Nom affiché | Description |
+|------|-----------|-------------|-------------|
+| Binary Sensor | `binary_sensor.{enfant}_presence` | {Enfant} Présence | Statut de présence |
+| Calendar | `calendar.{enfant}_calendar` | {Enfant} Calendrier | Calendrier complet |
+| Device Tracker | `device_tracker.{enfant}_tracker` | {Enfant} Tracker / Suivi | Présence (home/not_home) |
+| Sensor | `sensor.{enfant}_next_arrival` | {Enfant} Prochaine arrivée | Date/heure arrivée |
+| Sensor | `sensor.{enfant}_next_departure` | {Enfant} Prochain départ | Date/heure départ |
+| Sensor | `sensor.{enfant}_days_remaining` | {Enfant} Jours restants | Jours avant changement |
+| Sensor | `sensor.{enfant}_current_period` | {Enfant} Période actuelle | `school` / `vacation` |
+| Sensor | `sensor.{enfant}_next_vacation_name` | {Enfant} Prochaines vacances | Nom des vacances |
+| Sensor | `sensor.{enfant}_next_vacation_start` | {Enfant} Date des prochaines vacances | Date de début |
+| Sensor | `sensor.{enfant}_days_until_vacation` | {Enfant} Jours jusqu'aux vacances | Jours avant vacances |
 
 ---
 
-**Note** : Remplacez `{enfant}` par le nom réel de votre entité (en minuscules, avec underscores si nécessaire).
+**Note** : Remplacez `{enfant}` par le slug du prénom de l’enfant (minuscules, espaces → underscores, ex. `lucas`, `sarah_lea`).
