@@ -47,6 +47,8 @@ class FranceEducationProvider(BaseHolidayProvider):
             return f"{year - 1}-{year}"
         return f"{year}-{year + 1}"
 
+    def _normalize_zone(self, zone: str) -> str:
+        """Normalize zone name for API compatibility."""
         zone_mapping = {
             "Corse": "Corse",
             "DOM-TOM": "Guadeloupe",
