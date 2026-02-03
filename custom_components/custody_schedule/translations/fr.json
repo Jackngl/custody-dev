@@ -222,6 +222,50 @@
       }
     }
   },
+  "entity": {
+    "binary_sensor": {
+      "presence": {
+        "name": "Présence"
+      }
+    },
+    "calendar": {
+      "calendar": {
+        "name": "Calendrier"
+      }
+    },
+    "device_tracker": {
+      "tracker": {
+        "name": "Suivi"
+      }
+    },
+    "sensor": {
+      "next_arrival": {
+        "name": "Prochaine arrivée"
+      },
+      "next_departure": {
+        "name": "Prochain départ"
+      },
+      "days_remaining": {
+        "name": "Jours restants"
+      },
+      "current_period": {
+        "name": "Période actuelle",
+        "state": {
+          "school": "Garde classique",
+          "vacation": "Vacances scolaires"
+        }
+      },
+      "next_vacation_name": {
+        "name": "Prochaines vacances"
+      },
+      "next_vacation_start": {
+        "name": "Date des prochaines vacances"
+      },
+      "days_until_vacation": {
+        "name": "Jours jusqu'aux vacances"
+      }
+    }
+  },
   "selector": {
     "custody_type": {
       "options": {

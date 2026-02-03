@@ -48,8 +48,8 @@ class SensorDefinition:
 
 
 SENSORS: tuple[SensorDefinition, ...] = (
-    SensorDefinition("next_arrival", "mdi:calendar-clock"),
-    SensorDefinition("next_departure", "mdi:calendar-arrow-right"),
+    SensorDefinition("next_arrival", "mdi:calendar-clock", SensorDeviceClass.TIMESTAMP),
+    SensorDefinition("next_departure", "mdi:calendar-arrow-right", SensorDeviceClass.TIMESTAMP),
     SensorDefinition(
         "days_remaining",
         "mdi:clock-end",
@@ -59,7 +59,7 @@ SENSORS: tuple[SensorDefinition, ...] = (
     ),
     SensorDefinition("current_period", "mdi:school"),
     SensorDefinition("next_vacation_name", "mdi:calendar-star"),
-    SensorDefinition("next_vacation_start", "mdi:calendar-start"),
+    SensorDefinition("next_vacation_start", "mdi:calendar-start", SensorDeviceClass.TIMESTAMP),
     SensorDefinition(
         "days_until_vacation",
         "mdi:calendar-clock",
@@ -126,9 +126,9 @@ class CustodyScheduleSensor(CoordinatorEntity[CustodyComputation], SensorEntity)
 
         key = self._definition.key
         if key == "next_arrival":
-            return self._format_datetime(data.next_arrival)
+            return data.next_arrival
         if key == "next_departure":
-            return self._format_datetime(data.next_departure)
+            return data.next_departure
         if key == "days_remaining":
             return data.days_remaining
         if key == "current_period":
@@ -136,56 +136,10 @@ class CustodyScheduleSensor(CoordinatorEntity[CustodyComputation], SensorEntity)
         if key == "next_vacation_name":
             return data.next_vacation_name
         if key == "next_vacation_start":
-            return self._format_datetime(data.next_vacation_start)
+            return data.next_vacation_start
         if key == "days_until_vacation":
             return data.days_until_vacation
         return None
-
-    def _format_datetime(self, value: datetime | None) -> str | None:
-        """Return formatted datetime string localized for the user."""
-        if value is None:
-            return None
-
-        # Ensure we are in local time
-        localized = dt_util.as_local(value)
-        time_str = localized.strftime("%H:%M")
-
-        # Get language (handle fr-FR, fr-BE, etc.)
-        lang = (self.hass.config.language or "en").lower()
-
-        if lang.startswith("fr"):
-            months = [
-                "janvier",
-                "février",
-                "mars",
-                "avril",
-                "mai",
-                "juin",
-                "juillet",
-                "août",
-                "septembre",
-                "octobre",
-                "novembre",
-                "décembre",
-            ]
-            return f"{localized.day} {months[localized.month - 1]} {localized.year} à {time_str}"
-
-        # Default to English format
-        months_en = [
-            "January",
-            "February",
-            "March",
-            "April",
-            "May",
-            "June",
-            "July",
-            "August",
-            "September",
-            "October",
-            "November",
-            "December",
-        ]
-        return f"{months_en[localized.month - 1]} {localized.day}, {localized.year} at {time_str}"
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:

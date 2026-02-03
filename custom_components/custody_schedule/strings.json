@@ -181,30 +181,44 @@
   "entity": {
     "binary_sensor": {
       "presence": {
-        "name": "Presence (Custody)"
+        "name": "Presence"
+      }
+    },
+    "calendar": {
+      "calendar": {
+        "name": "Calendar"
+      }
+    },
+    "device_tracker": {
+      "tracker": {
+        "name": "Tracker"
       }
     },
     "sensor": {
       "next_arrival": {
-        "name": "Next arrival (Custody)"
+        "name": "Next arrival"
       },
       "next_departure": {
-        "name": "Next departure (Custody)"
+        "name": "Next departure"
       },
       "days_remaining": {
-        "name": "Days remaining (Custody)"
+        "name": "Days remaining"
       },
       "current_period": {
-        "name": "Current period (Custody)"
+        "name": "Current period",
+        "state": {
+          "school": "Regular",
+          "vacation": "Vacation"
+        }
       },
       "next_vacation_name": {
-        "name": "Next vacations (Custody)"
+        "name": "Next vacations"
       },
       "next_vacation_start": {
-        "name": "Next vacations start (Custody)"
+        "name": "Next vacations start"
       },
       "days_until_vacation": {
-        "name": "Days until vacations (Custody)"
+        "name": "Days until vacations"
       }
     }
   },

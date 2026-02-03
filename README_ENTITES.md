@@ -88,7 +88,7 @@ Calendrier complet affichant tous les événements de garde (weekends/semaines e
 ### 3. Device Tracker : Suivi de présence
 
 **Nom de l'entité** : `device_tracker.{enfant}_tracker`  
-**Nom affiché** : `{Enfant} Tracker` (ou « {Enfant} Suivi » en français selon la langue de l’interface)
+**Nom affiché** : `{Enfant} Suivi`
 
 #### Description
 Dispositif de suivi basé sur la présence de l'enfant (garde classique ou vacances scolaires). Cette entité peut être utilisée dans l'entité **Personne** de Home Assistant pour créer un suivi de présence complet.
@@ -126,17 +126,17 @@ Dispositif de suivi basé sur la présence de l'enfant (garde classique ou vacan
 
 ---
 
-### 4. Sensor : Prochaine arrivée (garde)
+### 4. Sensor : Prochaine arrivée
 
 **Nom de l'entité** : `sensor.{enfant}_next_arrival`  
-**Nom affiché** : `{Enfant} Prochaine arrivée (garde)`
+**Nom affiché** : `{Enfant} Prochaine arrivée`
 
 #### Description
 Date et heure de la prochaine arrivée de l'enfant (garde classique ou vacances).
 
 #### Format
-- **État** : Date/heure au format ISO (ex: `2025-01-15T16:15:00+01:00`)
-- **Unité** : Aucune
+- **État** : Objet Timestamp (Home Assistant gère automatiquement l'affichage selon votre langue)
+- **Classe** : `timestamp`
 
 #### Utilisation
 - **Dashboard** : Afficher le prochain rendez-vous
@@ -144,17 +144,17 @@ Date et heure de la prochaine arrivée de l'enfant (garde classique ou vacances)
 
 ---
 
-### 5. Sensor : Prochain départ (garde)
+### 5. Sensor : Prochain départ
 
 **Nom de l'entité** : `sensor.{enfant}_next_departure`  
-**Nom affiché** : `{Enfant} Prochain départ (garde)`
+**Nom affiché** : `{Enfant} Prochain départ`
 
 #### Description
 Date et heure du prochain départ de l'enfant (garde classique ou vacances).
 
 #### Format
-- **État** : Date/heure au format ISO (ex: `2025-01-19T19:00:00+01:00`)
-- **Unité** : Aucune
+- **État** : Objet Timestamp (affichage automatique)
+- **Classe** : `timestamp`
 
 #### Utilisation
 - **Dashboard** : Afficher le prochain départ
@@ -162,17 +162,17 @@ Date et heure du prochain départ de l'enfant (garde classique ou vacances).
 
 ---
 
-### 6. Sensor : Jours restants (garde)
+### 6. Sensor : Jours restants
 
 **Nom de l'entité** : `sensor.{enfant}_days_remaining`  
-**Nom affiché** : `{Enfant} Jours restants (garde)`
+**Nom affiché** : `{Enfant} Jours restants`
 
 #### Description
 Nombre de jours restants avant le prochain changement de garde.
 
 #### Format
 - **État** : Nombre décimal (ex: `3.5`)
-- **Unité** : `jours`
+- **Unité** : `d` (affiché comme "jours" ou "days")
 - **Type** : `duration` (durée)
 
 #### Utilisation
@@ -200,10 +200,10 @@ Période actuelle (garde classique, vacances scolaires, ou aucune).
 
 ---
 
-### 8. Sensor : Prochaines vacances scolaires
+### 8. Sensor : Prochaines vacances
 
 **Nom de l'entité** : `sensor.{enfant}_next_vacation_name`  
-**Nom affiché** : `{Enfant} Prochaines vacances scolaires`
+**Nom affiché** : `{Enfant} Prochaines vacances`
 
 #### Description
 Nom des prochaines vacances scolaires à venir.
@@ -224,29 +224,29 @@ Nom des prochaines vacances scolaires à venir.
 **Nom affiché** : `{Enfant} Date des prochaines vacances`
 
 #### Description
-Date et heure de début des prochaines vacances scolaires au format lisible en français.
+Date et heure de début des prochaines vacances scolaires.
 
 #### Format
-- **État** : Date/heure au format lisible (ex: `27 janvier 2026 à 16:15`)
-- **Unité** : Aucune
+- **État** : Objet Timestamp (affichage automatique)
+- **Classe** : `timestamp`
 
 #### Utilisation
-- **Dashboard** : Afficher la date de début des prochaines vacances de manière lisible
+- **Dashboard** : Afficher la date de début des prochaines vacances
 - **Automation** : Planifier des actions avant le début des vacances
 
 ---
 
-### 10. Sensor : Jours jusqu'aux vacances scolaires
+### 10. Sensor : Jours jusqu'aux vacances
 
 **Nom de l'entité** : `sensor.{enfant}_days_until_vacation`  
-**Nom affiché** : `{Enfant} Jours jusqu'aux vacances scolaires`
+**Nom affiché** : `{Enfant} Jours jusqu'aux vacances`
 
 #### Description
 Nombre de jours restants avant le début des prochaines vacances scolaires.
 
 #### Format
 - **État** : Nombre décimal (ex: `15.5`)
-- **Unité** : `jours`
+- **Unité** : `d`
 - **Type** : `duration` (durée)
 
 #### Utilisation
