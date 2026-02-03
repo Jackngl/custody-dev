@@ -545,7 +545,7 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Optional(CONF_CALENDAR_SYNC, default=data.get(CONF_CALENDAR_SYNC, False)): cv.boolean,
                 vol.Optional(
                     CONF_CALENDAR_TARGET,
-                    default=data.get(CONF_CALENDAR_TARGET, ""),
+                    default=data.get(CONF_CALENDAR_TARGET) if data.get(CONF_CALENDAR_TARGET) else vol.UNDEFINED,
                 ): selector.EntitySelector(selector.EntitySelectorConfig(domain="calendar")),
                 vol.Optional(
                     CONF_CALENDAR_SYNC_DAYS,
@@ -1109,7 +1109,7 @@ class CustodyScheduleOptionsFlow(config_entries.OptionsFlow):
                 vol.Optional(CONF_CALENDAR_SYNC, default=data.get(CONF_CALENDAR_SYNC, False)): cv.boolean,
                 vol.Optional(
                     CONF_CALENDAR_TARGET,
-                    default=data.get(CONF_CALENDAR_TARGET, ""),
+                    default=data.get(CONF_CALENDAR_TARGET) if data.get(CONF_CALENDAR_TARGET) else vol.UNDEFINED,
                 ): selector.EntitySelector(selector.EntitySelectorConfig(domain="calendar")),
                 vol.Optional(
                     CONF_CALENDAR_SYNC_DAYS,
