@@ -7,7 +7,7 @@ on:
 
 jobs:
   promote:
-    if: github.repository == 'Jackngl/custody_dev'
+    if: github.repository == 'Jackngl/custody-dev'
     runs-on: ubuntu-latest
     environment:
       name: production
