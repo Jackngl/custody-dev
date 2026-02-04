@@ -361,6 +361,7 @@ Supprime manuellement les événements du calendrier. Cette méthode identifie l
 - `days` (optionnel) : Fenêtre de scan en jours (défaut: 120)
 - `include_unmarked` (optionnel) : Tente de supprimer même les événements sans marqueur explicite
 - `purge_all` (optionnel) : Supprime absolument TOUS les événements trouvés (attention)
+- `match_text` (optionnel) : Supprime les événements contenant ce texte dans le résumé
 - `debug` (optionnel) : Affiche les détails techniques dans les logs (recommandé)
 
 **Exemple** :
