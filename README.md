@@ -1,8 +1,6 @@
 # 👨‍👩‍👧‍👦 Custody (Custody Schedule)
 
 <div align="center">
-  <img src="logo.png" alt="Custody Logo" width="400"/>
-  <br/>
   <img src="icon.png" alt="Custody Icon" width="128"/>
 </div>
 
