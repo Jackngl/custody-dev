@@ -1,168 +1,182 @@
-# 👨‍👩‍👧‍👦 Custody (Custody Schedule)
-
 <div align="center">
-  <img src="icon.png" alt="Custody Icon" width="128"/>
+
+# 👨‍👩‍👧‍👦 Custody Schedule
+
+**Intégration Home Assistant pour la gestion intelligente des gardes alternées**
+
+[![Version](https://img.shields.io/badge/version-1.8.37-blue.svg)](https://github.com/Jackngl/custody/releases)
+[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2025.12-green.svg)](https://www.home-assistant.io/)
+[![License](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
+[![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz)
+
+<img src="icon.png" alt="Custody Schedule Icon" width="128"/>
+
 </div>
 
-![Version](https://img.shields.io/badge/version-1.8.37-blue.svg)
+---
 
-![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2025.12-green.svg)
-![License](https://img.shields.io/badge/license-MIT-yellow.svg)
+## 📖 À propos
 
-Intégration Home Assistant pour planifier facilement les gardes alternées, suivre les périodes en cours et automatiser la maison (chauffage, notifications, dashboard…).
+**Custody Schedule** est une intégration complète pour Home Assistant qui simplifie la gestion des gardes alternées. Elle automatise le calcul des périodes de garde, synchronise avec votre calendrier, et permet d'automatiser votre maison intelligente selon la présence des enfants.
 
+### ✨ Pourquoi Custody Schedule ?
 
-## 📋 Table des matières
+- 🎯 **Configuration intuitive** : Interface guidée étape par étape
+- 🤖 **Automatisation complète** : Calcul intelligent des périodes et gestion des vacances scolaires
+- 📅 **Synchronisation calendrier** : Intégration native avec Google Calendar
+- 🏠 **Automatisation domotique** : Contrôle du chauffage, lumières, notifications selon la présence
+- 🌍 **Support international** : Zones scolaires françaises, belges, suisses, luxembourgeoises et québécoises
+- 🗣️ **Assistants vocaux** : Compatible avec Alexa et Home Assistant Assist
 
-- [Fonctionnalités principales](#fonctionnalités-principales)
-- [Installation](#installation)
-  - [Installation via HACS (recommandé)](#installation-via-hacs-recommandé)
-  - [Installation manuelle](#installation-manuelle)
-- [Configuration](#configuration)
-  - [Synchronisation Google Calendar](#synchronisation-google-calendar)
-- [Diagnostic et Nettoyage (Purge)](#diagnostic-et-nettoyage-purge)
-- [Tableaux de bord (Lovelace)](#tableaux-de-bord-lovelace)
-- [Services disponibles](#services-disponibles)
-- [Événements Home Assistant](#événements-home-assistant)
-- [Entités générées](#entités-générées)
-- [Automatisations et exemples](#automatisations-et-exemples)
-- [API des vacances scolaires](#api-des-vacances-scolaires)
-- [Roadmap](#roadmap)
-- [Contribution](#contribution)
+---
 
-## ✨ Fonctionnalités principales
-
-- ✅ **Configuration simplifiée** : parcours guidé avec labels clairs (enfant ➜ garde ➜ vacances ➜ options)
-- ✅ **Calcul intelligent** : alternance automatique des vacances chaque année et gestion des priorités (les vacances et fêtes parentales "découpent" proprement les week-ends classiques).
-- ✅ **Calcul automatique** des périodes selon plusieurs rythmes :
-  - Semaine alternée (1/1)
-  - Week-end alterné
-  - Rythme personnalisé (sélection jour par jour sur 14 jours)
-  - Rythme 2-2-3 ou 2-2-5-5
-  - Exceptions et règles personnalisées (dates fixes)
-- ✅ **Support des zones scolaires françaises** (A/B/C/Corse/DOM-TOM)
-- ✅ **API officielle** `data.education.gouv.fr` pour les vacances scolaires
-- ✅ **URL d'API personnalisable** dans les options avancées
-- ✅ **Test de l'API** via service dédié
-- ✅ **Gestion des règles vacances** :
-  - 1ère semaine, 2ème semaine
-  - 1ère moitié, 2ème moitié
-  - Semaines paires/impaires
-  - Juillet/Août
-  - Règles basées sur années paires/impaires
-- ✅ **Règles grandes vacances** (juillet/août avec variantes)
-- ✅ **Gestion auto Fêtes des parents** : inversion automatique pour la Fête des Mères et la Fête des Pères.
-- ✅ **Services** pour exceptions, forcer présence/absence, recalcul
-- ✅ **Événements** Home Assistant pour automatisations
-- ✅ **Support multi-enfants** avec configurations indépendantes
-- ✅ **Calendrier** intégré pour visualisation
-
-## 🚀 Installation
+## 🚀 Démarrage rapide
 
 ### Installation via HACS (recommandé)
 
-1. **Installer HACS** si ce n'est pas déjà fait : [Documentation HACS](https://hacs.xyz/docs/setup/download)
+1. **Installer HACS** si nécessaire : [Documentation HACS](https://hacs.xyz/docs/setup/download)
 
-2. **Installer l'intégration** :
-
-   [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Jackngl&repository=custody&category=integration)
-
-   Cliquez sur le bouton ci-dessus pour ouvrir HACS directement sur l'intégration.
+2. **Ajouter le dépôt** :
    
-   *Si le bouton ne fonctionne pas :* 
-   Ajoutez le dépôt manuellement (`https://github.com/Jackngl/custody`) dans **HACS** > **Dépôts personnalisés**.
+   [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Jackngl&repository=custody&category=integration)
+   
+   *Ou ajoutez manuellement* : `https://github.com/Jackngl/custody` dans **HACS** > **Dépôts personnalisés**
 
-3. **Télécharger et Redémarrer** :
-   - Cliquez sur **Télécharger** dans HACS.
-   - Une fois l'installation terminée, **Redémarrez Home Assistant**.
+3. **Installer et redémarrer** :
+   - Cliquez sur **Télécharger** dans HACS
+   - Redémarrez Home Assistant
 
 4. **Configurer** :
-   - Allez dans **Paramètres** → **Appareils & services** → **Ajouter une intégration**
-   - Cherchez "Custody" et configurez vos enfants.
+   - **Paramètres** → **Appareils & services** → **Ajouter une intégration**
+   - Recherchez "Custody" et suivez l'assistant de configuration
 
 ### Installation manuelle
 
-1. **Télécharger le code** :
-   ```bash
-   cd /config
-   git clone https://github.com/Jackngl/custody.git
-   ```
+```bash
+cd /config
+git clone https://github.com/Jackngl/custody.git
+cp -r custody/custom_components/custody_schedule /config/custom_components/
+```
 
-2. **Copier le dossier** :
-   ```bash
-   cp -r custody/custom_components/custody_schedule /config/custom_components/
-   ```
+Redémarrez Home Assistant puis ajoutez l'intégration via l'interface.
 
-3. **Redémarrer Home Assistant**
+---
 
-4. **Ajouter l'intégration** :
-   - Aller dans **Paramètres** → **Appareils & services** → **Ajouter une intégration**
-   - Chercher "Custody" et suivre les étapes
+## ✨ Fonctionnalités principales
+
+### 🎛️ Configuration simplifiée
+
+- Parcours guidé avec labels clairs (enfant ➜ garde ➜ vacances ➜ options)
+- Interface utilisateur intuitive et complète
+- Support multi-enfants avec configurations indépendantes
+
+### 🧮 Calcul intelligent
+
+- **Rythmes de garde** :
+  - Semaine alternée (1/1)
+  - Week-end alterné
+  - Rythme personnalisé (sélection jour par jour sur 14 jours)
+  - Rythmes 2-2-3 ou 2-2-5-5
+  - Exceptions et règles personnalisées (dates fixes)
+
+- **Gestion des vacances** :
+  - Alternance automatique des vacances chaque année
+  - Gestion des priorités (vacances et fêtes parentales découpent proprement les week-ends)
+  - Règles flexibles : 1ère/2ème semaine, moitiés, semaines paires/impaires, juillet/août
+  - Gestion automatique des Fêtes des Mères et des Pères
+
+### 🌍 Support international
+
+- **Zones scolaires françaises** : A, B, C, Corse, DOM-TOM
+- **API officielle** : `data.education.gouv.fr` pour les vacances scolaires
+- **Support multi-pays** : Belgique, Suisse, Luxembourg, Québec
+- **URL d'API personnalisable** pour sources alternatives
+- **Service de test** intégré pour diagnostiquer les problèmes
+
+### 🔗 Intégrations
+
+- **Synchronisation Google Calendar** : Création et suppression automatique des événements
+- **Calendrier intégré** : Visualisation complète des périodes de garde
+- **Événements Home Assistant** : Déclencheurs pour automatisations
+- **Services dédiés** : Exceptions, forcer présence/absence, recalcul
+
+### 🎙️ Assistants vocaux
+
+- **Amazon Alexa** : Blueprints pour annonces automatiques
+- **Home Assistant Assist** : Questions naturelles sur la présence
+- **Support bilingue** : Français et Anglais
+
+---
 
 ## ⚙️ Configuration
 
-La configuration se fait entièrement via l'interface utilisateur :
+La configuration se fait entièrement via l'interface utilisateur Home Assistant.
 
-1. **Informations de l'enfant** : nom, icône, photo
-2. **Type de garde** : choisir le rythme (semaine alternée, week-end, etc.)
-3. **Zone scolaire et vacances** : zone (A/B/C/Corse/DOM-TOM) et règles de vacances
+### Étapes de configuration
+
+1. **Informations de l'enfant** : Nom, icône, photo
+2. **Type de garde** : Sélection du rythme (semaine alternée, week-end, etc.)
+3. **Zone scolaire et vacances** : Zone (A/B/C/Corse/DOM-TOM) et règles de vacances
 4. **Options avancées** :
-   - Notes
+   - Notes personnalisées
    - Notifications
    - Synchronisation calendrier (Google Calendar)
    - Calendrier cible + fenêtre de synchro
    - Intervalle de synchro
    - Exceptions (UI avancée)
-   - **URL d'API personnalisée** (optionnel)
-
-### Configuration de l'URL d'API
-
-Si vous souhaitez utiliser une API alternative pour les vacances scolaires :
-
-1. Aller dans **Paramètres** → **Appareils & services** → **Custody** → **Options**
-2. Sélectionner **Options avancées**
-3. Entrer votre URL personnalisée dans le champ **URL API vacances scolaires**
-   - L'URL doit contenir les placeholders `{year}` et `{zone}`
-   - Exemple : `https://api.example.com/holidays?year={year}&zone={zone}`
+   - URL d'API personnalisée (optionnel)
 
 ### Synchronisation Google Calendar
 
-Si vous activez la synchronisation, l'intégration crée et supprime automatiquement les événements de garde
-sur un calendrier Home Assistant (`calendar.*`) — y compris ceux fournis par l'intégration Google Calendar officielle.
+Activez la synchronisation pour créer automatiquement les événements de garde sur votre calendrier Home Assistant.
 
-1. Aller dans **Paramètres** → **Appareils & services** → **Custody** → **Options**
-2. Sélectionner **Options avancées**
-3. Activer **Synchronisation Google Calendar**
-4. Choisir le **Calendrier cible**
-5. Définir la **fenêtre de synchro (jours)** (par défaut 120)
-6. Définir l'**intervalle de synchro (heures)** (par défaut 1)
+**Configuration** :
+1. **Paramètres** → **Appareils & services** → **Custody** → **Options**
+2. Sélectionnez **Options avancées**
+3. Activez **Synchronisation Google Calendar**
+4. Choisissez le **Calendrier cible**
+5. Définissez la **fenêtre de synchro** (défaut : 120 jours)
+6. Définissez l'**intervalle de synchro** (défaut : 1 heure)
 
-### Exceptions (UI avancée)
+### Exceptions
 
-Vous pouvez ajouter des exceptions (jours supplémentaires, garde en semaine, etc.) via l'UI :
+Gérez les exceptions (jours supplémentaires, gardes en semaine, etc.) via l'interface :
 
-1. Aller dans **Paramètres** → **Appareils & services** → **Custody** → **Options**
-2. Sélectionner **Exceptions**
-3. Ajouter / Modifier / Supprimer une exception (début + fin + titre)
+1. **Paramètres** → **Appareils & services** → **Custody** → **Options**
+2. Sélectionnez **Exceptions**
+3. Ajoutez, modifiez ou supprimez une exception (début + fin + titre)
 
 #### Exceptions récurrentes
-Dans le même écran **Exceptions**, vous pouvez aussi gérer des exceptions récurrentes (hebdomadaires) :
+
+Dans le même écran, gérez des exceptions récurrentes (hebdomadaires) :
 - Jour de la semaine + heure début/fin
 - Optionnel : date de début / date de fin
 
 Les exceptions (ponctuelles et récurrentes) apparaissent dans le calendrier de l'intégration.
 
-## 🛠 Diagnostic et Nettoyage (Purge)
+### Configuration de l'URL d'API
 
-Si vous constatez des doublons ou des événements qui ne se suppriment pas correctement de votre Google Calendar, l'intégration propose un service de purge robuste.
+Pour utiliser une API alternative pour les vacances scolaires :
 
-Depuis la version 1.3.0, la purge utilise une méthode d'accès direct aux entités Home Assistant, ce qui permet de récupérer les identifiants réels (UID) souvent masqués par l'API standard.
+1. **Paramètres** → **Appareils & services** → **Custody** → **Options**
+2. Sélectionnez **Options avancées**
+3. Entrez votre URL personnalisée dans **URL API vacances scolaires**
+   - L'URL doit contenir les placeholders `{year}` et `{zone}`
+   - Exemple : `https://api.example.com/holidays?year={year}&zone={zone}`
 
-### Comment lancer une purge manuelle
+---
 
-1. Allez dans **Outils de développement** -> **Actions** (ou Services).
-2. Sélectionnez l'action `Custody: Purger les événements Google` (service `custody_schedule.purge_calendar_events`).
-3. Passez en **mode YAML** et utilisez le modèle suivant :
+## 🛠️ Diagnostic et Nettoyage (Purge)
+
+Si vous constatez des doublons ou des événements qui ne se suppriment pas correctement dans votre Google Calendar, utilisez le service de purge robuste.
+
+Depuis la version 1.3.0, la purge utilise une méthode d'accès direct aux entités Home Assistant pour récupérer les identifiants réels (UID).
+
+### Purge manuelle
+
+1. Allez dans **Outils de développement** → **Actions** (ou Services)
+2. Sélectionnez `Custody: Purger les événements Google` (service `custody_schedule.purge_calendar_events`)
+3. Passez en **mode YAML** et utilisez :
 
 ```yaml
 action: custody_schedule.purge_calendar_events
@@ -173,16 +187,15 @@ data:
 ```
 
 > [!TIP]
-> Pour trouver votre `entry_id`, allez dans les **Paramètres** de l'intégration ou utilisez ce modèle dans l'outil Modèles de HA : 
+> Pour trouver votre `entry_id`, utilisez ce modèle dans l'outil Modèles de HA :
 > `{{ config_entry_id('binary_sensor.NOM_ENFANT_presence') }}`
 
 ---
 
 ## 🎨 Tableaux de bord (Lovelace)
 
-Voici des exemples de cartes premium pour visualiser la garde sur votre dashboard Home Assistant.
+### Carte Mushroom (Recommandé 🌟)
 
-### 1. Carte Mushroom (Recommandé 🌟)
 Cette carte change de couleur et d'icône selon la présence de l'enfant.
 
 ```yaml
@@ -216,7 +229,8 @@ tap_action:
   navigation_path: /config/devices/dashboard
 ```
 
-### 2. Badge de statut minimaliste
+### Badge de statut minimaliste
+
 Idéal pour une vue condensée en haut de dashboard.
 
 ```yaml
@@ -239,11 +253,11 @@ chips:
 
 Ajoute des périodes ponctuelles de présence (vacances, échanges spécifiques).
 
-**Paramètres :**
+**Paramètres** :
 - `entry_id` (requis) : ID de l'intégration
 - `dates` (requis) : Liste de périodes avec `start`, `end`, et optionnellement `label`
 
-**Exemple :**
+**Exemple** :
 ```yaml
 action: custody_schedule.set_manual_dates
 data:
@@ -258,12 +272,12 @@ data:
 
 Force l'état présent/absent pour une durée donnée.
 
-**Paramètres :**
+**Paramètres** :
 - `entry_id` (requis) : ID de l'intégration
 - `state` (requis) : `on` (présent) ou `off` (absent)
 - `duration` (optionnel) : Durée en minutes
 
-**Exemple :**
+**Exemple** :
 ```yaml
 action: custody_schedule.override_presence
 data:
@@ -276,10 +290,10 @@ data:
 
 Déclenche immédiatement un recalcul du planning.
 
-**Paramètres :**
+**Paramètres** :
 - `entry_id` (requis) : ID de l'intégration
 
-**Exemple :**
+**Exemple** :
 ```yaml
 action: custody_schedule.refresh_schedule
 data:
@@ -290,12 +304,12 @@ data:
 
 Teste la connexion à l'API des vacances scolaires et affiche les résultats dans les logs.
 
-**Paramètres :**
+**Paramètres** :
 - `entry_id` (optionnel) : ID de l'intégration (utilise la config de cette intégration)
 - `zone` (optionnel, défaut: "A") : Zone scolaire à tester
 - `year` (optionnel) : Année scolaire au format "2024-2025"
 
-**Exemple :**
+**Exemple** :
 ```yaml
 action: custody_schedule.test_holiday_api
 data:
@@ -304,17 +318,15 @@ data:
   year: "2024-2025"
 ```
 
-Les résultats sont disponibles dans les logs Home Assistant.
-
 ### `custody_schedule.export_exceptions`
 
 Exporte les exceptions (ponctuelles + récurrentes) vers un fichier JSON dans `/config/www`.
 
-**Paramètres :**
+**Paramètres** :
 - `entry_id` (requis) : ID de l'intégration
 - `filename` (optionnel) : Nom du fichier (ex: `custody_exceptions.json`)
 
-**Exemple :**
+**Exemple** :
 ```yaml
 action: custody_schedule.export_exceptions
 data:
@@ -326,13 +338,13 @@ data:
 
 Importe des exceptions depuis un fichier JSON ou un payload direct.
 
-**Paramètres :**
+**Paramètres** :
 - `entry_id` (requis) : ID de l'intégration
 - `filename` (optionnel) : Nom du fichier dans `/config/www`
 - `exceptions` (optionnel) : Liste d'exceptions ponctuelles
 - `recurring` (optionnel) : Liste d'exceptions récurrentes
 
-**Exemple :**
+**Exemple** :
 ```yaml
 action: custody_schedule.import_exceptions
 data:
@@ -342,22 +354,24 @@ data:
 
 ### `custody_schedule.purge_calendar_events`
 
-Supprime manuellement les événements du calendrier. Cette méthode est capable d'identifier les événements créés par Custody même lorsqu'ils sont orphelins ou dupliqués grâce à une lecture directe des index du calendrier.
+Supprime manuellement les événements du calendrier. Cette méthode identifie les événements créés par Custody même lorsqu'ils sont orphelins ou dupliqués.
 
-**Paramètres :**
-- `entry_id` (requis) : ID de l'intégration.
-- `days` (optionnel) : Fenêtre de scan en jours (défaut: 120).
-- `include_unmarked` (optionnel) : Tente de supprimer même les événements sans marqueur explicite (basé sur le sommaire).
-- `purge_all` (optionnel) : Supprime absolument TOUS les événements trouvés dans la fenêtre (attention).
-- `debug` (optionnel) : Affiche les détails techniques dans les logs système (recommandé pour vérification).
+**Paramètres** :
+- `entry_id` (requis) : ID de l'intégration
+- `days` (optionnel) : Fenêtre de scan en jours (défaut: 120)
+- `include_unmarked` (optionnel) : Tente de supprimer même les événements sans marqueur explicite
+- `purge_all` (optionnel) : Supprime absolument TOUS les événements trouvés (attention)
+- `debug` (optionnel) : Affiche les détails techniques dans les logs (recommandé)
 
-**Exemple :**
+**Exemple** :
 ```yaml
 action: custody_schedule.purge_calendar_events
 data:
   entry_id: "01KF1ZW5K8JNX55258QBCF1STF"
   debug: true
 ```
+
+---
 
 ## 📡 Événements Home Assistant
 
@@ -367,7 +381,7 @@ L'intégration émet automatiquement des événements pour déclencher des autom
 
 Déclenché quand l'enfant arrive (transition de `off` à `on`).
 
-**Données :**
+**Données** :
 - `entry_id` : ID de l'intégration
 - `child` : Nom de l'enfant
 - `next_departure` : Prochain départ (ISO format)
@@ -377,7 +391,7 @@ Déclenché quand l'enfant arrive (transition de `off` à `on`).
 
 Déclenché quand l'enfant part (transition de `on` à `off`).
 
-**Données :**
+**Données** :
 - `entry_id` : ID de l'intégration
 - `child` : Nom de l'enfant
 - `next_departure` : Prochain départ (ISO format)
@@ -387,7 +401,7 @@ Déclenché quand l'enfant part (transition de `on` à `off`).
 
 Déclenché au début des vacances scolaires.
 
-**Données :**
+**Données** :
 - `entry_id` : ID de l'intégration
 - `holiday` : Nom de la période de vacances
 
@@ -395,9 +409,11 @@ Déclenché au début des vacances scolaires.
 
 Déclenché à la fin des vacances scolaires.
 
-**Données :**
+**Données** :
 - `entry_id` : ID de l'intégration
 - `holiday` : Nom de la période de vacances qui se termine
+
+---
 
 ## 📊 Entités générées
 
@@ -416,18 +432,22 @@ Pour chaque enfant configuré, les entités suivantes sont créées automatiquem
 | `sensor.<nom>_days_until_vacation` | Sensor | Jours jusqu'aux vacances |
 | `calendar.<nom>_calendar` | Calendar | Calendrier avec toutes les périodes |
 
-**Note :** `<nom>` correspond au nom de l'enfant normalisé en minuscules avec les espaces remplacés par des underscores. Les entity_id sont toujours en anglais (ASCII uniquement), même si le nom d'affichage contient des accents. Par exemple :
-- Pour un enfant nommé "Lucas" : `binary_sensor.lucas_presence`, `calendar.lucas_calendar`, etc.
-- Pour un enfant nommé "Sarah-Léa" : `binary_sensor.sarah_lea_presence`, `calendar.sarah_lea_calendar`, etc.
-- Pour un enfant nommé "François" : `binary_sensor.francois_presence`, `calendar.francois_calendar`, etc.
+> **Note** : `<nom>` correspond au nom de l'enfant normalisé en minuscules avec les espaces remplacés par des underscores. Les `entity_id` sont toujours en anglais (ASCII uniquement), même si le nom d'affichage contient des accents.
+>
+> **Exemples** :
+> - "Lucas" → `binary_sensor.lucas_presence`, `calendar.lucas_calendar`
+> - "Sarah-Léa" → `binary_sensor.sarah_lea_presence`, `calendar.sarah_lea_calendar`
+> - "François" → `binary_sensor.francois_presence`, `calendar.francois_calendar`
 
 Les noms affichés dans l'interface Home Assistant sont localisés selon la langue configurée (français/anglais) et préservent les caractères originaux du nom.
 
-**Attributs disponibles :**
+**Attributs disponibles** :
 - `vacation_name` : Nom de la période de vacances en cours
 - `zone` : Zone scolaire configurée
 - `location` : Lieu configuré
 - `notes` : Notes configurées
+
+---
 
 ## 🤖 Automatisations et exemples
 
@@ -608,26 +628,26 @@ automation:
 
 ---
 
-## 🎙️ Assistants Vocaux (Alexa & Assist)
+## 🎙️ Assistants Vocaux
 
-La version 1.7.0 introduit un support optimisé pour les assistants vocaux.
+### Amazon Alexa
 
-### 1. Amazon Alexa (Annonce Automatique)
-Vous pouvez maintenant utiliser un **Blueprint** pour qu'Alexa annonce automatiquement les changements de garde sur vos enceintes (Echo, Dot, etc.).
+Utilisez un **Blueprint** pour qu'Alexa annonce automatiquement les changements de garde sur vos enceintes (Echo, Dot, etc.).
 
-**Configuration :**
-1. Téléchargez le fichier `alexa_custody_announcement.yaml` depuis le dossier `blueprints`.
-2. Placez-le dans votre dossier `/config/blueprints/automation/`.
-3. Allez dans **Paramètres** -> **Automatisations et scènes** -> **Blueprints**.
-4. Créez une automatisation à partir du modèle "Annonce Alexa - Changement de Garde".
+**Configuration** :
+1. Téléchargez `alexa_custody_announcement.yaml` depuis le dossier `blueprints`
+2. Placez-le dans `/config/blueprints/automation/`
+3. **Paramètres** → **Automatisations et scènes** → **Blueprints**
+4. Créez une automatisation à partir du modèle "Annonce Alexa - Changement de Garde"
 
-### 2. Home Assistant Assist (Voix native)
-Grâce à la classe d'appareil `presence` sur les capteurs binaires, vous pouvez poser des questions naturelles à Assist :
+### Home Assistant Assist
+
+Grâce à la classe d'appareil `presence` sur les capteurs binaires, posez des questions naturelles :
 - *"Est-ce que Lucas est présent ?"*
 - *"Quel est le statut de présence de Lucas ?"*
 
 > [!TIP]
-> Pour une meilleure expérience avec Alexa, assurez-vous d'exposer l'entité `binary_sensor.<nom>_presence` via Nabu Casa ou votre intégration manuelle Alexa.
+> Pour une meilleure expérience avec Alexa, exposez l'entité `binary_sensor.<nom>_presence` via Nabu Casa ou votre intégration manuelle Alexa.
 
 ---
 
@@ -655,7 +675,7 @@ L'intégration utilise l'API officielle du ministère de l'Éducation nationale 
 
 Vous pouvez configurer une URL d'API personnalisée dans les options avancées. L'URL doit contenir les placeholders `{year}` et `{zone}`.
 
-**Format attendu :**
+**Format attendu** :
 ```
 https://api.example.com/holidays?year={year}&zone={zone}
 ```
@@ -671,7 +691,9 @@ data:
   year: "2024-2025"
 ```
 
-Les résultats sont disponibles dans les logs Home Assistant (Paramètres → Système → Logs).
+Les résultats sont disponibles dans les logs Home Assistant (**Paramètres** → **Système** → **Logs**).
+
+---
 
 ## 🗺️ Roadmap
 
@@ -703,7 +725,7 @@ Les résultats sont disponibles dans les logs Home Assistant (Paramètres → Sy
 - [x] **Raffinements Assist** : Phrases personnalisées ("Qui a Lucas ?")
 
 ### v1.8 (Disponible 🚀)
-- [x] **Support Billingue** : Traductions intégrales Français / Anglais (Entities, Config Flow, Assist)
+- [x] **Support Bilingue** : Traductions intégrales Français / Anglais (Entities, Config Flow, Assist)
 - [x] **Internationalisation** : Support des calendriers scolaires et jours fériés pour Belgique, Suisse, Luxembourg et Québec
 - [x] **Détection de langue** : Adaptation automatique selon la configuration HA pour Assist
 
@@ -715,6 +737,8 @@ Les résultats sont disponibles dans les logs Home Assistant (Paramètres → Sy
 - [ ] **Mode Co-parent** : Synchronisation entre deux instances Home Assistant
 - [ ] **Gestion financière** : Suivi des frais partagés et pensions
 - [ ] **Journal d'échange** : Notes et photos partagées lors des transitions
+
+---
 
 ## 🤝 Contribution
 
@@ -755,9 +779,13 @@ data:
   zone: "A"
 ```
 
+---
+
 ## 📝 Licence
 
 MIT © Custody Schedule
+
+---
 
 ## 🙏 Remerciements
 
@@ -765,6 +793,8 @@ Merci à :
 - La communauté Home Assistant pour son support
 - Le ministère de l'Éducation nationale pour l'API des vacances scolaires
 - Tous les parents en garde alternée qui utilisent cette intégration
+
+---
 
 ## 📞 Support
 
@@ -774,4 +804,8 @@ Merci à :
 
 ---
 
+<div align="center">
+
 **Fait avec ❤️ pour les familles en garde alternée**
+
+</div>
