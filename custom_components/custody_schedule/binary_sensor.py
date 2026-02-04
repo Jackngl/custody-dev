@@ -41,8 +41,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
     coordinator: CustodyScheduleCoordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
     child_name_display = entry.data.get(CONF_CHILD_NAME_DISPLAY, entry.data.get(CONF_CHILD_NAME))
-    child_name_normalized = entry.data.get(CONF_CHILD_NAME, entry.data.get(CONF_CHILD_NAME_DISPLAY))
-    async_add_entities([CustodyPresenceBinarySensor(coordinator, entry, child_name_display, child_name_normalized)])
+    child_name_normalized = entry.data.get(
+        CONF_CHILD_NAME, entry.data.get(CONF_CHILD_NAME_DISPLAY)
+    )
+    async_add_entities(
+        [
+            CustodyPresenceBinarySensor(
+                coordinator, entry, child_name_display, child_name_normalized
+            )
+        ]
+    )
 
 
 class CustodyPresenceBinarySensor(CoordinatorEntity[CustodyComputation], BinarySensorEntity):
@@ -52,7 +60,13 @@ class CustodyPresenceBinarySensor(CoordinatorEntity[CustodyComputation], BinaryS
     _attr_has_entity_name = True
     _attr_translation_key = "presence"
 
-    def __init__(self, coordinator: CustodyScheduleCoordinator, entry: ConfigEntry, child_name_display: str, child_name_normalized: str) -> None:
+    def __init__(
+        self,
+        coordinator: CustodyScheduleCoordinator,
+        entry: ConfigEntry,
+        child_name_display: str,
+        child_name_normalized: str,
+    ) -> None:
         super().__init__(coordinator)
         self._entry = entry
         self._attr_unique_id = f"{entry.entry_id}_presence"

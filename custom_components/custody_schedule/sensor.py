@@ -79,9 +79,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
     coordinator: CustodyScheduleCoordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
     child_name_display = entry.data.get(CONF_CHILD_NAME_DISPLAY, entry.data.get(CONF_CHILD_NAME))
-    child_name_normalized = entry.data.get(CONF_CHILD_NAME, entry.data.get(CONF_CHILD_NAME_DISPLAY))
+    child_name_normalized = entry.data.get(
+        CONF_CHILD_NAME, entry.data.get(CONF_CHILD_NAME_DISPLAY)
+    )
 
-    entities = [CustodyScheduleSensor(coordinator, entry, definition, child_name_display, child_name_normalized) for definition in SENSORS]
+    entities = [
+        CustodyScheduleSensor(
+            coordinator, entry, definition, child_name_display, child_name_normalized
+        )
+        for definition in SENSORS
+    ]
     async_add_entities(entities)
 
 
