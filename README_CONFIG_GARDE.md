@@ -82,8 +82,9 @@ L'application supporte **6 types de garde** pour les weekends et semaines :
 #### 2. **Mon année de garde (parité)** (`reference_year_custody`)
 - **Description** : Détermine si vous avez la garde les années paires ou impaires (pour les week-ends/semaines).
 - **Valeurs** :
-  - `"Paire"` : Vous avez la garde lors des semaines ISO paires (2024, 2026, ...).
-  - `"Impaire"` : Vous avez la garde lors des semaines ISO impaires (2025, 2027, ...).
+  - `"even"` : Vous avez la garde lors des semaines ISO paires (2024, 2026, ...).
+  - `"odd"` : Vous avez la garde lors des semaines ISO impaires (2025, 2027, ...).
+- **Note** : Dans l'interface utilisateur, ces valeurs sont affichées comme "Paire" et "Impaire", mais la valeur de configuration réelle est `"even"` ou `"odd"`.
 - **Note** : Ce champ calibre l'alternance de base. Les vacances scolaires alternent ensuite automatiquement chaque année à partir de cette base.
 
 #### 3. **Heure d'arrivée** (`arrival_time`)
