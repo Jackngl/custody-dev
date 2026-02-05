@@ -89,6 +89,31 @@ class TestCustodyLogic(unittest.TestCase):
         self.assertEqual(end_date.date(), date(2025, 10, 13))
         self.assertEqual((end_date - start_date).days, 7)
 
+    def test_two_two_three_pattern(self):
+        # 2-2-3 pattern starts with 2 days ON
+        config = {
+            "arrival_time": "08:00",
+            "departure_time": "19:00",
+            "custody_type": "two_two_three"
+        }
+        manager = CustodyScheduleManager(self.hass, config, self.holidays)
+        
+        # Friday Oct 3, 2025
+        # The general loop uses self._reference_start(now, custody_type)
+        # We can just check the _generate_pattern_windows if we mock more
+        # But for now, let's just verify the logic doesn't crash
+        holidays = set()
+        now = datetime(2025, 10, 3, 8, 0)
+        
+        # This calls the general loop we just modified
+        windows = manager._generate_pattern_windows(now)
+        
+        self.assertTrue(len(windows) > 0)
+        # First window should be 2 days (index 0 and 1) -> start Friday, end Saturday
+        # because duration = days-1 = 1 day. (Friday 08:00 to Saturday 19:00)
+        self.assertEqual(windows[0].start.date(), date(2025, 10, 3))
+        self.assertEqual(windows[0].end.date(), date(2025, 10, 4))
+
 
 if __name__ == "__main__":
     unittest.main()
