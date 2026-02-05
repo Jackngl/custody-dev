@@ -194,6 +194,13 @@ class CustodyScheduleManager:
         self._departure_time = self._parse_time(self._config.get(CONF_DEPARTURE_TIME, "19:00"))
         self._end_day = self._config.get(CONF_END_DAY, "sunday").lower()
 
+    def _apply_holiday_extension(self, end_date: datetime, holidays: set[date]) -> datetime:
+        """Extend the end date if it falls on a holiday."""
+        current_end = end_date
+        while current_end.date() in holidays:
+            current_end += timedelta(days=1)
+        return current_end
+
     def _calculate_end_date(self, start_date: datetime, holidays: set[date]) -> datetime:
         """Calculate the end date based on start_date, configured end_day and holidays."""
         target_end_weekday = WEEKDAY_LOOKUP.get(self._end_day, 6)  # Default Sunday
@@ -203,22 +210,13 @@ class CustodyScheduleManager:
 
         # Special case: if end_day is same as start_day (e.g. Monday to Monday)
         # we want a full week, not 0 days.
-        if (
-            days_to_end == 0 and self._end_day != "sunday"
-        ):  # Usually we want at least 1 day if it's a "school return" mode
-            # For alternate weeks (Monday to Monday), we need 7 days
+        if days_to_end == 0 and self._end_day != "sunday":
             days_to_end = 7
-        elif days_to_end == 0 and start_date.weekday() == 4:  # Friday to Friday weekend? Unusual but possible
+        elif days_to_end == 0 and start_date.weekday() == 4:  # Friday to Friday?
             days_to_end = 7
 
         end_date = start_date + timedelta(days=days_to_end)
-
-        # Holiday extension loop
-        # While the return day is a holiday, keep extending
-        while end_date.date() in holidays:
-            end_date += timedelta(days=1)
-
-        return end_date
+        return self._apply_holiday_extension(end_date, holidays)
 
     def set_manual_windows(self, ranges: Iterable[dict[str, Any]]) -> None:
         """Store manual presence windows defined via service."""
@@ -720,6 +718,7 @@ class CustodyScheduleManager:
                         days_to_end = 7
                     base_end_date = monday + timedelta(days=days_to_end)
 
+                    window_start = monday
                     window_end = self._calculate_end_date(window_start, holidays)
 
                     label_suffix = ""
@@ -767,33 +766,51 @@ class CustodyScheduleManager:
             offset = timedelta()
             for segment in pattern:
                 segment_start = pointer + offset
-                # For cycled patterns, we use the return day only for the "ON" segments
-                if segment["state"] == "on":
-                    # Get public holidays for current/next year to be passed to helper
+
+                # Determine intended duration
+                # For alternate_week, we use the end_day logic
+                if custody_type == "alternate_week":
+                    # Get public holidays
                     country = self._config.get(CONF_COUNTRY, "FR")
                     alsace_moselle = self._config.get(CONF_ALSACE_MOSELLE, False)
                     holidays = get_public_holidays(now.year, country, alsace_moselle) | get_public_holidays(
                         now.year + 1, country, alsace_moselle
                     )
-
-                    # Resolve end date using the return day logic
                     segment_end = self._calculate_end_date(segment_start, holidays)
+                    # For alternate_week, the next segment should start exactly when this one ends
+                    actual_duration = segment_end - segment_start
+                else:
+                    # Cycled patterns: fixed duration + holiday extension
+                    # Note: segment["days"] is total days.
+                    # If 1 day: start Mon 08:00, end Mon 19:00 (duration 0 days in timedelta, but spans 1 day)
+                    segment_end = segment_start + timedelta(days=segment["days"] - 1)
 
+                    # Apply holiday extension
+                    country = self._config.get(CONF_COUNTRY, "FR")
+                    alsace_moselle = self._config.get(CONF_ALSACE_MOSELLE, False)
+                    holidays = get_public_holidays(now.year, country, alsace_moselle) | get_public_holidays(
+                        now.year + 1, country, alsace_moselle
+                    )
+                    segment_end = self._apply_holiday_extension(segment_end, holidays)
+
+                    # For cycled patterns, we keep the original offset for the NEXT segment
+                    # to avoid shifting the whole future schedule.
+                    # Exception: if it's a "custom" pattern, we might want it to shift?
+                    # No, usually patterns are fixed calendars.
+                    actual_duration = timedelta(days=segment["days"])
+
+                if segment["state"] == "on":
                     # Get label from custody type definition
                     type_label = CUSTODY_TYPES.get(custody_type, {}).get("label", "Garde")
                     windows.append(
                         CustodyWindow(
                             start=self._apply_time(segment_start, self._arrival_time),
                             end=self._apply_time(segment_end, self._departure_time),
-                            # No suffix here to keep it simple for generic patterns
                             label=f"Garde - {type_label}",
                             source="pattern",
                         )
                     )
-                else:
-                    # Off segments just advance the offset
-                    pass
-                offset += timedelta(days=segment["days"])
+                offset += actual_duration
             pointer += timedelta(days=cycle_days)
 
         return windows
