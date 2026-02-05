@@ -13,11 +13,22 @@
       },
       "custody": {
         "title": "Rythme de garde",
-        "description": "Définir le type de garde et la parité."
+        "description": "Définir le type de garde et la parité.",
+        "data": {
+          "custody_type": "Type de garde",
+          "reference_year_custody": "Mon année de garde (parité)",
+          "start_day": "Jour de départ"
+        }
       },
       "schedule": {
         "title": "Horaires et lieu",
-        "description": "Modifier les horaires d'arrivée/départ et le lieu d'échange."
+        "description": "Modifier les horaires d'arrivée/départ et le lieu d'échange.",
+        "data": {
+          "arrival_time": "Heure d'arrivée",
+          "departure_time": "Heure de départ",
+          "end_day": "Jour de fin / retour",
+          "location": "Lieu d'échange"
+        }
       },
       "custom_pattern": {
         "title": "Rythme personnalisé",
@@ -150,7 +161,14 @@
     "step": {
       "init": {
         "title": "Options de Custody",
-        "description": "Choisissez ce que vous souhaitez modifier."
+        "description": "Choisissez ce que vous souhaitez modifier.",
+        "menu_options": {
+          "custody": "Rythme de garde",
+          "schedule": "Horaires et lieu",
+          "vacations": "Vacances scolaires",
+          "exceptions": "Exceptions",
+          "advanced": "Options avancées"
+        }
       },
       "custody": {
         "title": "Garde classique (weekends/semaines)",

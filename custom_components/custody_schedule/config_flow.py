@@ -141,10 +141,9 @@ def _school_level_selector() -> selector.SelectSelector:
 
 def _custody_type_selector() -> selector.SelectSelector:
     """Create a custody type selector with localized labels."""
-    options_list = [{"value": key, "label": key} for key in sorted(CUSTODY_TYPES.keys())]
     return selector.SelectSelector(
         selector.SelectSelectorConfig(
-            options=options_list,
+            options=sorted(CUSTODY_TYPES.keys()),
             mode=selector.SelectSelectorMode.DROPDOWN,
             translation_key="custody_type",
         )
@@ -153,10 +152,9 @@ def _custody_type_selector() -> selector.SelectSelector:
 
 def _reference_year_selector() -> selector.SelectSelector:
     """Create a reference year selector with localized labels."""
-    options_list = [{"value": year, "label": year} for year in REFERENCE_YEARS]
     return selector.SelectSelector(
         selector.SelectSelectorConfig(
-            options=options_list,
+            options=REFERENCE_YEARS,
             mode=selector.SelectSelectorMode.LIST,
             translation_key="reference_year",
         )
@@ -650,13 +648,13 @@ class CustodyScheduleOptionsFlow(config_entries.OptionsFlow):
         """Show options menu."""
         return self.async_show_menu(
             step_id="init",
-            menu_options={
-                "custody": "Garde classique",
-                "schedule": "Horaires et lieu",
-                "vacations": "Vacances scolaires",
-                "exceptions": "Exceptions",
-                "advanced": "Options avancées",
-            },
+            menu_options=[
+                "custody",
+                "schedule",
+                "vacations",
+                "exceptions",
+                "advanced",
+            ],
         )
 
     async def async_step_custody(self, user_input: dict[str, Any] | None = None) -> FlowResult:
@@ -678,16 +676,7 @@ class CustodyScheduleOptionsFlow(config_entries.OptionsFlow):
         schema_dict = {
             vol.Required(CONF_CUSTODY_TYPE, default=custody_type): _custody_type_selector(),
             # Unified label for reference year
-            vol.Required(CONF_REFERENCE_YEAR_CUSTODY, default=reference_year_default): selector.SelectSelector(
-                selector.SelectSelectorConfig(
-                    options=[
-                        {"value": "even", "label": "even"},
-                        {"value": "odd", "label": "odd"},
-                    ],
-                    mode=selector.SelectSelectorMode.LIST,
-                    translation_key="reference_year",
-                )
-            ),
+            vol.Required(CONF_REFERENCE_YEAR_CUSTODY, default=reference_year_default): _reference_year_selector(),
         }
 
         # Only show start_day for custody types that use it

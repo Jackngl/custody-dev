@@ -12,14 +12,21 @@
         }
       },
       "custody": {
-        "title": "Regular custody (weekends/weeks)",
-        "description": "Configure regular custody outside school holidays. Public holidays (Friday/Monday) automatically extend weekends.",
+        "title": "Custody Rhythm",
+        "description": "Define the custody type and parity.",
         "data": {
           "custody_type": "Custody type",
           "reference_year_custody": "My custody year (parity)",
-          "start_day": "Start day",
+          "start_day": "Start day"
+        }
+      },
+      "schedule": {
+        "title": "Schedule and Location",
+        "description": "Modify arrival/departure times and exchange location.",
+        "data": {
           "arrival_time": "Arrival time",
           "departure_time": "Departure time",
+          "end_day": "End day / Return",
           "location": "Exchange location"
         }
       },
@@ -150,7 +157,14 @@
     "step": {
       "init": {
         "title": "Custody Options",
-        "description": "Choose what you want to modify."
+        "description": "Choose what you want to modify.",
+        "menu_options": {
+          "custody": "Custody rhythm",
+          "schedule": "Schedule and location",
+          "vacations": "School vacations",
+          "exceptions": "Exceptions",
+          "advanced": "Advanced options"
+        }
       },
       "custody": {
         "title": "Regular custody (weekends/weeks)",
