@@ -9,7 +9,7 @@
 [![License](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 [![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz)
 
-<img src="icon.png" alt="Custody Schedule Icon" width="128"/>
+<img src="logo.png" alt="Custody Schedule Logo" width="200"/>
 
 [🇫🇷 Version française](README.fr.md) | [🇬🇧 English version](README.md)
 
