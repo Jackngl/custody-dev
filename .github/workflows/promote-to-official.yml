@@ -65,11 +65,23 @@ jobs:
             exit 1
           fi
 
-          # Push tags (NO --force)
-          if git push official --tags; then
-            echo "✓ Successfully pushed tags"
+          # Push tags
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            TAG_NAME="${{ github.ref_name }}"
+            echo "Promoting release tag: $TAG_NAME"
+            if git push official "$TAG_NAME"; then
+              echo "✓ Successfully pushed release tag $TAG_NAME"
+            else
+              echo "::warning::Failed to push release tag $TAG_NAME"
+            fi
           else
-            echo "::warning::Failed to push some tags (may already exist)"
+            # Fallback for manual dispatch: push all tags but ignore existing ones errors
+            echo "Pushing all tags..."
+            if git push official --tags; then
+              echo "✓ Successfully pushed all tags"
+            else
+              echo "::warning::Some tags failed to push (probably already exist)"
+            fi
           fi
 
           echo "::endgroup::"
