@@ -601,7 +601,10 @@ class CustodyScheduleManager:
         if vacation_windows is None:
             vacation_windows = []
 
-        custody_type = self._config.get("custody_type", "alternate_week")
+        if not self._config.get(CONF_ENABLE_CUSTODY, True):
+            return []
+
+        custody_type = self._config.get(CONF_CUSTODY_TYPE, "alternate_week")
         type_def = CUSTODY_TYPES.get(custody_type) or CUSTODY_TYPES["alternate_week"]
         # Use a longer horizon (400 days) to support 365-day calendar sync
         horizon = now + timedelta(days=400)
