@@ -249,6 +249,7 @@
         "data": {
           "zone": "Zone scolaire",
           "vacation_split_mode": "Répartition des moitiés",
+          "summer_split_mode": "Découpage été",
           "school_level": "Niveau scolaire",
           "alsace_moselle": "Jours fériés Alsace-Moselle",
           "parental_role": "Mon rôle",

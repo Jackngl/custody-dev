@@ -48,6 +48,7 @@
         "data": {
           "zone": "School zone",
           "vacation_split_mode": "Vacation split mode",
+          "summer_split_mode": "Summer split mode",
           "school_level": "School level",
           "alsace_moselle": "Alsace-Moselle public holidays",
           "parental_role": "My role",
