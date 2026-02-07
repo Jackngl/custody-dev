@@ -4,11 +4,12 @@
     "step": {
       "user": {
         "title": "Enfant",
-        "description": "Saisissez le prénom de l'enfant. Pour l'icône, vous pouvez chercher 'boy' (garçon) ou 'girl' (fille) dans le sélecteur.",
+        "description": "Saisissez le prénom de l'enfant.",
         "data": {
           "child_name": "Prénom de l'enfant",
           "icon": "Icône (recherche mdi, ex: baby-boy, baby-girl)",
-          "photo": "Photo / Avatar (URL ou /local/image.jpg)"
+          "photo": "Photo / Avatar (URL ou /local/image.jpg)",
+          "enable_custody": "Activer la gestion de la garde alternée"
         }
       },
       "custody": {
@@ -52,9 +53,15 @@
       },
       "vacations": {
         "title": "Vacances scolaires",
-        "description": "Configurer les règles de garde pendant les vacances scolaires. Les vacances priment sur la garde classique. La répartition choisie s'applique automatiquement à toutes les vacances, y compris l'été.",
+        "description": "Sélectionnez le pays.",
         "data": {
-          "country": "Pays",
+          "country": "Pays"
+        }
+      },
+      "vacations_details": {
+        "title": "Détails des vacances",
+        "description": "Configuration de la zone et des règles spécifiques.",
+        "data": {
           "zone": "Zone scolaire",
           "vacation_split_mode": "Répartition des moitiés",
           "school_level": "Niveau scolaire",

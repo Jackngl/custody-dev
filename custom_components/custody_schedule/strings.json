@@ -4,11 +4,12 @@
     "step": {
       "user": {
         "title": "Child",
-        "description": "Enter the child's first name. For the icon, you can search for 'boy' or 'girl' in the selector.",
+        "description": "Enter the child's first name.",
         "data": {
           "child_name": "Child's name",
           "icon": "Icon (mdi search, e.g., baby-boy, baby-girl)",
-          "photo": "Photo / Avatar (URL or /local/image.jpg)"
+          "photo": "Photo / Avatar (URL or /local/image.jpg)",
+          "enable_custody": "Enable custody management"
         }
       },
       "custody": {
@@ -33,12 +34,21 @@
       },
       "vacations": {
         "title": "School vacations",
-        "description": "Configure custody rules during school holidays. Vacations take priority over regular custody.",
+        "description": "Select country.",
         "data": {
-          "country": "Country",
+          "country": "Country"
+        }
+      },
+      "vacations_details": {
+        "title": "Vacation details",
+        "description": "Configure rules.",
+        "data": {
           "zone": "School zone",
           "vacation_split_mode": "Half split",
-          "school_level": "School level"
+          "school_level": "School level",
+          "alsace_moselle": "Enable Alsace-Moselle public holidays",
+          "parental_role": "My role (Father/Mother)",
+          "auto_parent_days": "Auto-detect Father's/Mother's Day"
         }
       },
       "advanced": {

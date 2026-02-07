@@ -512,31 +512,52 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(step_id="custom_pattern", data_schema=vol.Schema(schema_dict))
 
     async def async_step_vacations(self, user_input: dict[str, Any] | None = None) -> FlowResult:
-        """Configure school vacations - step 3."""
+        """Configure school vacations (Country selection) - step 3a."""
+        if user_input:
+            self._data.update(user_input)
+            return await self.async_step_vacations_details()
+
+        country_default = self._data.get(CONF_COUNTRY, DEFAULT_COUNTRY)
+
+        schema = vol.Schema(
+            {
+                vol.Required(CONF_COUNTRY, default=country_default): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=[
+                            {"value": "FR", "label": "France (FR)"},
+                            {"value": "BE", "label": "Belgique (BE)"},
+                            {"value": "CH", "label": "Suisse (CH)"},
+                            {"value": "LU", "label": "Luxembourg (LU)"},
+                            {"value": "CA_QC", "label": "Québec (CA_QC)"},
+                        ],
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                )
+            }
+        )
+        return self.async_show_form(step_id="vacations", data_schema=schema)
+
+    async def async_step_vacations_details(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+        """Configure school vacations details (Zone, etc.) - step 3b."""
         if user_input:
             self._data.update(user_input)
             return await self.async_step_advanced()
 
+        # Get the selected country from previous step
+        country = self._data.get(CONF_COUNTRY, DEFAULT_COUNTRY)
+
         # Defaults
-        country_default = self._data.get(CONF_COUNTRY, DEFAULT_COUNTRY)
         zone_default = self._data.get(CONF_ZONE, "A")
+        # If the zone doesn't match the country, reset it (simple heuristic or just let the selector handle it)
+        # But _zone_selector() returns specific options, so if the current default isn't valid, vol.In might fail?
+        # Typically SelectSelector handles invalid defaults gracefully (shows empty or error), but let's be safe.
+        # Actually, we rely on the user picking a valid one.
+
         vacation_split_default = self._data.get(CONF_VACATION_SPLIT_MODE, "odd_first")
         enable_custody = self._data.get(CONF_ENABLE_CUSTODY, True)
 
         schema_dict = {
-            vol.Required(CONF_COUNTRY, default=country_default): selector.SelectSelector(
-                selector.SelectSelectorConfig(
-                    options=[
-                        {"value": "FR", "label": "France (FR)"},
-                        {"value": "BE", "label": "Belgique (BE)"},
-                        {"value": "CH", "label": "Suisse (CH)"},
-                        {"value": "LU", "label": "Luxembourg (LU)"},
-                        {"value": "CA_QC", "label": "Québec (CA_QC)"},
-                    ],
-                    mode=selector.SelectSelectorMode.DROPDOWN,
-                )
-            ),
-            vol.Required(CONF_ZONE, default=zone_default): _zone_selector(country_default),
+            vol.Required(CONF_ZONE, default=zone_default): _zone_selector(country),
             vol.Optional(
                 CONF_SCHOOL_LEVEL, default=self._data.get(CONF_SCHOOL_LEVEL, "primary")
             ): _school_level_selector(),
@@ -552,7 +573,7 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             ] = _summer_split_selector()
 
         # Alsace-Moselle only for France
-        if country_default == "FR":
+        if country == "FR":
             schema_dict[
                 vol.Optional(CONF_ALSACE_MOSELLE, default=self._data.get(CONF_ALSACE_MOSELLE, False))
             ] = selector.BooleanSelector()
@@ -566,7 +587,7 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Optional(CONF_AUTO_PARENT_DAYS, default=self._data.get(CONF_AUTO_PARENT_DAYS, True))
             ] = selector.BooleanSelector()
 
-        return self.async_show_form(step_id="vacations", data_schema=vol.Schema(schema_dict))
+        return self.async_show_form(step_id="vacations_details", data_schema=vol.Schema(schema_dict))
 
     async def async_step_advanced(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         """Advanced optional settings (step 4)."""
@@ -1102,44 +1123,80 @@ class CustodyScheduleOptionsFlow(config_entries.OptionsFlow):
         return self.async_show_form(step_id="exceptions_recurring_delete", data_schema=schema)
 
     async def async_step_vacations(self, user_input: dict[str, Any] | None = None) -> FlowResult:
-        """Modify vacances scolaires (school zone and vacation rules)."""
+        """Modify vacances scolaires (Country selection) - step 3a."""
+        if user_input:
+            self._data.update(user_input)
+            return await self.async_step_vacations_details()
+
+        data = {**self._entry.data, **(self._entry.options or {})}
+        country_default = data.get(CONF_COUNTRY, DEFAULT_COUNTRY)
+
+        schema = vol.Schema(
+            {
+                vol.Required(CONF_COUNTRY, default=country_default): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=[
+                            {"value": "FR", "label": "France (FR)"},
+                            {"value": "BE", "label": "Belgique (BE)"},
+                            {"value": "CH", "label": "Suisse (CH)"},
+                            {"value": "LU", "label": "Luxembourg (LU)"},
+                            {"value": "CA_QC", "label": "Québec (CA_QC)"},
+                        ],
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                )
+            }
+        )
+        return self.async_show_form(step_id="vacations", data_schema=schema)
+
+    async def async_step_vacations_details(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+        """Modify vacances scolaires details (Zone, etc.) - step 3b."""
         if user_input:
             self._data.update(user_input)
             return self.async_create_entry(title="", data=self._data)
 
-        data = {**self._entry.data, **(self._entry.options or {})}
-        # Get reference_year for vacations (separate from custody reference_year)
-        vacation_split_default = data.get(CONF_VACATION_SPLIT_MODE, "odd_first")
+        # Get updated data (including potentially new country)
+        country = self._data.get(CONF_COUNTRY, DEFAULT_COUNTRY)
+        enable_custody = self._data.get(CONF_ENABLE_CUSTODY, True)
 
-        schema = vol.Schema(
-            {
-                vol.Required(CONF_ZONE, default=data.get(CONF_ZONE, "A")): _zone_selector(),
-                vol.Optional(
-                    CONF_SCHOOL_LEVEL, default=data.get(CONF_SCHOOL_LEVEL, "primary")
-                ): _school_level_selector(),
-                vol.Required(CONF_VACATION_SPLIT_MODE, default=vacation_split_default): _vacation_split_selector(),
-                vol.Required(
-                    CONF_SUMMER_SPLIT_MODE, default=data.get(CONF_SUMMER_SPLIT_MODE, "half")
-                ): _summer_split_selector(),
-                vol.Optional(
-                    CONF_ALSACE_MOSELLE, default=data.get(CONF_ALSACE_MOSELLE, False)
-                ): selector.BooleanSelector(),
-                vol.Required(CONF_PARENTAL_ROLE, default=data.get(CONF_PARENTAL_ROLE, "none")): selector.SelectSelector(
-                    selector.SelectSelectorConfig(
-                        options=[
-                            {"value": "none", "label": "Aucun (Désactivé)"},
-                            {"value": "father", "label": "Papa"},
-                            {"value": "mother", "label": "Maman"},
-                        ],
-                        mode=selector.SelectSelectorMode.DROPDOWN,
-                    )
-                ),
-                vol.Optional(
-                    CONF_AUTO_PARENT_DAYS, default=data.get(CONF_AUTO_PARENT_DAYS, True)
-                ): selector.BooleanSelector(),
-            }
-        )
-        return self.async_show_form(step_id="vacations", data_schema=schema)
+        # Determine defaults
+        # If country changed in previous step, zone might need reset, but for options let's keep existing if valid?
+        # Simpler: just use what's in _data
+        zone_default = self._data.get(CONF_ZONE, "A")
+        vacation_split_default = self._data.get(CONF_VACATION_SPLIT_MODE, "odd_first")
+
+        schema_dict = {
+            vol.Required(CONF_ZONE, default=zone_default): _zone_selector(country),
+            vol.Optional(
+                CONF_SCHOOL_LEVEL, default=self._data.get(CONF_SCHOOL_LEVEL, "primary")
+            ): _school_level_selector(),
+        }
+
+        # Vacation split modes and parental roles are only relevant for coparenting (custody enabled)
+        if enable_custody:
+            schema_dict[
+                vol.Required(CONF_VACATION_SPLIT_MODE, default=vacation_split_default)
+            ] = _vacation_split_selector()
+            schema_dict[
+                vol.Required(CONF_SUMMER_SPLIT_MODE, default=self._data.get(CONF_SUMMER_SPLIT_MODE, "half"))
+            ] = _summer_split_selector()
+
+        # Alsace-Moselle only for France
+        if country == "FR":
+            schema_dict[
+                vol.Optional(CONF_ALSACE_MOSELLE, default=self._data.get(CONF_ALSACE_MOSELLE, False))
+            ] = selector.BooleanSelector()
+
+        # Parental role only if custody enabled
+        if enable_custody:
+            schema_dict[
+                vol.Required(CONF_PARENTAL_ROLE, default=self._data.get(CONF_PARENTAL_ROLE, "none"))
+            ] = _parental_role_selector()
+            schema_dict[
+                vol.Optional(CONF_AUTO_PARENT_DAYS, default=self._data.get(CONF_AUTO_PARENT_DAYS, True))
+            ] = selector.BooleanSelector()
+
+        return self.async_show_form(step_id="vacations_details", data_schema=vol.Schema(schema_dict))
 
     async def async_step_advanced(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         """Advanced optional settings."""
