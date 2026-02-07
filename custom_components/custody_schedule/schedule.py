@@ -283,90 +283,108 @@ class CustodyScheduleManager:
         next_window = next((window for window in windows if window.start > now_local and window.end > now_local), None)
 
         override_state = self._evaluate_override(now_local)
-        is_present = override_state if override_state is not None else current_window is not None
 
-        # Si current_window existe mais se termine très bientôt (déjà filtré à la ligne 184, mais sécurité supplémentaire)
-        # forcer is_present à False pour éviter d'afficher une date de départ dans le passé ou très proche
-        if current_window and current_window.end <= now_local + timedelta(minutes=1):
-            # La fenêtre se termine dans moins d'1 minute, considérer que l'enfant n'est plus en garde
-            if override_state is None:
+        # Check if custody management is enabled
+        if not self._config.get(CONF_ENABLE_CUSTODY, True):
+            # Full Custody Mode (Vacations Only)
+            # Default to Present unless manually overridden to Absent
+            is_present = True
+            if override_state is False:
                 is_present = False
-                current_window = None
 
-        next_arrival = None
-        next_departure = None
-        if is_present:
-            # En garde actuellement
-            if current_window:
-                # On est dans une vraie fenêtre de garde
-                next_departure = current_window.end
-                # S'assurer que next_departure est dans le futur (avec une marge de 1 minute)
-                if next_departure and next_departure > now_local + timedelta(minutes=1):
-                    # Chercher la fenêtre qui commence après next_departure
-                    next_arrival = next((w.start for w in windows if w.start > next_departure), None)
-                else:
-                    # Si la fin est dans le passé ou très proche, utiliser la prochaine fenêtre
-                    next_departure = next_window.end if next_window else None
-                    next_arrival = next_window.start if next_window else None
-                    # Si on n'a pas de next_window, chercher la prochaine fenêtre future
-                    if not next_departure:
-                        next_departure = next(
-                            (w.end for w in windows if w.end > now_local + timedelta(minutes=1)), None
-                        )
-                        if next_departure:
-                            matching_window = next((w for w in windows if w.end == next_departure), None)
-                            if matching_window:
-                                next_arrival = matching_window.start
-            elif override_state is True and self._presence_override and self._presence_override.get("until"):
-                # Override avec une date de fin spécifiée
-                next_departure = self._presence_override["until"]
-                if next_departure > now_local + timedelta(minutes=1):
-                    # Chercher la fenêtre qui commence après l'override
-                    next_arrival = next((w.start for w in windows if w.start > next_departure), None)
-                else:
-                    # Override dans le passé ou très proche, utiliser la prochaine fenêtre
-                    next_departure = next_window.end if next_window else None
-                    next_arrival = next_window.start if next_window else None
-                    # Si on n'a pas de next_window, chercher la prochaine fenêtre future
-                    if not next_departure:
-                        next_departure = next(
-                            (w.end for w in windows if w.end > now_local + timedelta(minutes=1)), None
-                        )
-                        if next_departure:
-                            matching_window = next((w for w in windows if w.end == next_departure), None)
-                            if matching_window:
-                                next_arrival = matching_window.start
-            else:
-                # Override sans date de fin ou cas spécial, utiliser la prochaine fenêtre
-                next_departure = next_window.end if next_window else None
-                next_arrival = next_window.start if next_window else None
+            # No scheduled movements in full custody
+            next_arrival = None
+            next_departure = None
+            days_remaining = None
+
+            # Determine current period (still useful)
+            period, vacation_name = await self._determine_period(now_local)
         else:
-            # Quand l'enfant n'est pas présent, next_arrival est toujours la prochaine fenêtre de garde future
-            # et next_departure est la fin de cette même prochaine fenêtre
-            next_arrival = next_window.start if next_window else None
-            next_departure = next_window.end if next_window else None
+            # Standard Custody Management
+            is_present = override_state if override_state is not None else current_window is not None
 
-            # S'assurer que next_departure est toujours dans le futur (avec marge d'1 minute)
-            # Normalement next_window.end devrait toujours être dans le futur, mais sécurité supplémentaire
-            if next_departure and next_departure <= now_local + timedelta(minutes=1):
-                # Si next_departure est dans le passé ou très proche, chercher la prochaine fenêtre après
-                next_departure = next((w.end for w in windows if w.end > now_local + timedelta(minutes=1)), None)
-                if next_departure:
-                    # Trouver la fenêtre correspondante pour next_arrival
-                    matching_window = next((w for w in windows if w.end == next_departure), None)
-                    if matching_window:
-                        next_arrival = matching_window.start
+            # Si current_window existe mais se termine très bientôt (déjà filtré à la ligne 184, mais sécurité supplémentaire)
+            # forcer is_present à False pour éviter d'afficher une date de départ dans le passé ou très proche
+            if current_window and current_window.end <= now_local + timedelta(minutes=1):
+                # La fenêtre se termine dans moins d'1 minute, considérer que l'enfant n'est plus en garde
+                if override_state is None:
+                    is_present = False
+                    current_window = None
+
+            next_arrival = None
+            next_departure = None
+            if is_present:
+                # En garde actuellement
+                if current_window:
+                    # On est dans une vraie fenêtre de garde
+                    next_departure = current_window.end
+                    # S'assurer que next_departure est dans le futur (avec une marge de 1 minute)
+                    if next_departure and next_departure > now_local + timedelta(minutes=1):
+                        # Chercher la fenêtre qui commence après next_departure
+                        next_arrival = next((w.start for w in windows if w.start > next_departure), None)
+                    else:
+                        # Si la fin est dans le passé ou très proche, utiliser la prochaine fenêtre
+                        next_departure = next_window.end if next_window else None
+                        next_arrival = next_window.start if next_window else None
+                        # Si on n'a pas de next_window, chercher la prochaine fenêtre future
+                        if not next_departure:
+                            next_departure = next(
+                                (w.end for w in windows if w.end > now_local + timedelta(minutes=1)), None
+                            )
+                            if next_departure:
+                                matching_window = next((w for w in windows if w.end == next_departure), None)
+                                if matching_window:
+                                    next_arrival = matching_window.start
+                elif override_state is True and self._presence_override and self._presence_override.get("until"):
+                    # Override avec une date de fin spécifiée
+                    next_departure = self._presence_override["until"]
+                    if next_departure > now_local + timedelta(minutes=1):
+                        # Chercher la fenêtre qui commence après l'override
+                        next_arrival = next((w.start for w in windows if w.start > next_departure), None)
+                    else:
+                        # Override dans le passé ou très proche, utiliser la prochaine fenêtre
+                        next_departure = next_window.end if next_window else None
+                        next_arrival = next_window.start if next_window else None
+                        # Si on n'a pas de next_window, chercher la prochaine fenêtre future
+                        if not next_departure:
+                            next_departure = next(
+                                (w.end for w in windows if w.end > now_local + timedelta(minutes=1)), None
+                            )
+                            if next_departure:
+                                matching_window = next((w for w in windows if w.end == next_departure), None)
+                                if matching_window:
+                                    next_arrival = matching_window.start
                 else:
-                    # Si aucune fenêtre future, next_arrival devrait aussi être None
-                    next_arrival = None
+                    # Override sans date de fin ou cas spécial, utiliser la prochaine fenêtre
+                    next_departure = next_window.end if next_window else None
+                    next_arrival = next_window.start if next_window else None
+            else:
+                # Quand l'enfant n'est pas présent, next_arrival est toujours la prochaine fenêtre de garde future
+                # et next_departure est la fin de cette même prochaine fenêtre
+                next_arrival = next_window.start if next_window else None
+                next_departure = next_window.end if next_window else None
 
-        days_remaining = None
-        target_dt = next_departure if is_present else next_arrival
-        if target_dt:
-            delta = target_dt - now_local
-            days_remaining = max(0, round(delta.total_seconds() / 86400, 2))
+                # S'assurer que next_departure est toujours dans le futur (avec marge d'1 minute)
+                # Normalement next_window.end devrait toujours être dans le futur, mais sécurité supplémentaire
+                if next_departure and next_departure <= now_local + timedelta(minutes=1):
+                    # Si next_departure est dans le passé ou très proche, chercher la prochaine fenêtre après
+                    next_departure = next((w.end for w in windows if w.end > now_local + timedelta(minutes=1)), None)
+                    if next_departure:
+                        # Trouver la fenêtre correspondante pour next_arrival
+                        matching_window = next((w for w in windows if w.end == next_departure), None)
+                        if matching_window:
+                            next_arrival = matching_window.start
+                    else:
+                        # Si aucune fenêtre future, next_arrival devrait aussi être None
+                        next_arrival = None
 
-        period, vacation_name = await self._determine_period(now_local)
+            days_remaining = None
+            target_dt = next_departure if is_present else next_arrival
+            if target_dt:
+                delta = target_dt - now_local
+                days_remaining = max(0, round(delta.total_seconds() / 86400, 2))
+
+            period, vacation_name = await self._determine_period(now_local)
 
         # Get next vacation information and raw holidays data
         (
@@ -1220,6 +1238,10 @@ class CustodyScheduleManager:
 
         def _custody_segment_for_holiday(holiday_obj) -> tuple[datetime, datetime]:
             eff_start, eff_end, mid = self._effective_holiday_bounds(holiday_obj)
+
+            # If custody management is disabled (Vacations Only), return the full vacation period
+            if not self._config.get(CONF_ENABLE_CUSTODY, True):
+                return eff_start, eff_end
 
             # Handle summer quarter-split if enabled
             is_summer = "été" in holiday_obj.name.lower() or holiday_obj.start.month in (7, 8)
