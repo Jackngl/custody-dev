@@ -179,11 +179,22 @@
         "title": "Options de Custody",
         "description": "Choisissez ce que vous souhaitez modifier.",
         "menu_options": {
+          "features": "Fonctionnalités",
           "custody": "Rythme de garde",
           "schedule": "Horaires et lieu",
           "vacations": "Vacances scolaires",
           "exceptions": "Exceptions",
           "advanced": "Options avancées"
+        }
+      },
+      "features": {
+        "title": "Fonctionnalités",
+        "description": "Activer ou désactiver la gestion de la garde.",
+        "data": {
+          "enable_custody": "Activer la gestion de la garde alternée"
+        },
+        "data_description": {
+          "enable_custody": "Si désactivé, le système gérera uniquement les vacances scolaires."
         }
       },
       "custody": {
