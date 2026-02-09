@@ -17,14 +17,19 @@ else
   echo "⚠️  Warning: No .venv found, using system python."
 fi
 
+# Inject mock Home Assistant for local tests if real one is not available
+export PYTHONPATH="$PYTHONPATH:$(pwd)/tests/mock_ha"
+echo "ℹ️  PYTHONPATH updated to include local mocks."
+
 echo "--- 🧼 Formatting (Black & Isort) ---"
-# Use --quiet to reduce noise
-$VENV_PYTHON -m black --quiet custom_components/custody_schedule tests
-$VENV_PYTHON -m isort --quiet custom_components/custody_schedule tests
+# --force-exclude ensures these are skipped even if black finds them
+$VENV_PYTHON -m black --quiet --force-exclude "/\.(venv|git|gemini|pytest_cache|DS_Store|pycache)/|brain/|tests/mock_ha/" custom_components/custody_schedule tests
+$VENV_PYTHON -m isort --quiet --skip-glob "**/__pycache__/*" --skip-glob "**/.DS_Store" --skip=tests/mock_ha custom_components/custody_schedule tests
 
 echo "--- 🔍 Linting (Flake8) ---"
-$VENV_PYTHON -m flake8 custom_components/custody_schedule tests --count --select=E9,F63,F7,F82 --show-source --statistics
-$VENV_PYTHON -m flake8 custom_components/custody_schedule tests --count --max-complexity=10 --max-line-length=127 --statistics
+# Using --exclude to bypass restricted files
+$VENV_PYTHON -m flake8 custom_components/custody_schedule tests --exclude=tests/mock_ha,**/__pycache__,.DS_Store,.venv,.git,.gemini,brain --count --select=E9,F63,F7,F82 --show-source --statistics
+$VENV_PYTHON -m flake8 custom_components/custody_schedule tests --exclude=tests/mock_ha,**/__pycache__,.DS_Store,.venv,.git,.gemini,brain --count --max-complexity=10 --max-line-length=127 --statistics
 
 echo "--- 🧪 Unit Tests (Pytest) ---"
 # -c /dev/null: ignore local pytest.ini that might have broken paths
