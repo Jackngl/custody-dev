@@ -43,11 +43,11 @@ jobs:
 
       - name: Run Black (Formatting)
         run: |
-          black --check --exclude "tests/mock_ha" custom_components/custody_schedule tests
+          black --check --force-exclude "tests/mock_ha/.*" custom_components/custody_schedule tests
 
       - name: Run Isort (Import sorting)
         run: |
-          isort --check-only --skip "tests/mock_ha" custom_components/custody_schedule tests
+          isort --check-only --skip-glob "tests/mock_ha/*" custom_components/custody_schedule tests
 
       - name: Run Flake8 (Linting)
         run: |
