@@ -155,16 +155,16 @@ class CustodyScheduleSensor(CoordinatorEntity[CustodyComputation], SensorEntity)
             target = data.next_departure if data.is_present else data.next_arrival
             if not target:
                 return None
-            
+
             # Use relative formatting for "soon" events, or absolute for distant ones
             diff = target - dt_util.now()
             if diff < timedelta(days=1):
                 return target.strftime("%H:%M")
             return target.strftime("%A %d/%m")
-            
+
         if key == "parent_in_charge":
             return "home" if data.is_present else "away"
-            
+
         return None
 
     @property
@@ -179,10 +179,10 @@ class CustodyScheduleSensor(CoordinatorEntity[CustodyComputation], SensorEntity)
             if data.current_period == "vacation":
                 return "mdi:beach"
             return "mdi:home-clock"
-            
+
         if key == "days_remaining":
             return "mdi:timer-sand"
-            
+
         if key == "parent_in_charge":
             return "mdi:home-account" if data.is_present else "mdi:account-arrow-right"
 
