@@ -23,6 +23,27 @@ This guide explains how to configure **regular custody** (alternate weekends and
 
 ---
 
+## 🎛️ Enable Custody Management
+
+The **"Enable custody management"** option (toggle) allows you to choose between two modes:
+
+### 1. **Enabled (Shared Custody)** - Default
+- **Behavior**: The child alternates between parents according to the configured schedule.
+- **Status**: Changes between "Present" (at your place) and "Absent" (at the other parent's).
+- **Sensors**: `next_arrival` and `next_departure` indicate upcoming exchanges.
+- **Vacations**: Divided into halves (or custom rules) to be shared.
+
+### 2. **Disabled (Full Custody)**
+- **Behavior**: The child is considered to live primarily with you.
+- **Status**: Always **"Present"** (unless manually overridden to "Absent").
+- **Sensors**: `next_arrival` and `next_departure` are disabled (no exchanges).
+- **Vacations**: **Full vacations** are displayed (no splitting), as the child is with you for the entire holiday.
+
+> **Note**: This setting is available in the initial configuration and in the "Features" menu of the Options.
+
+---
+
+
 ## 🔀 Separation of regular custody / school holidays
 
 The application clearly separates **two independent custody systems**:
@@ -122,6 +143,15 @@ The application supports **6 custody types** for weekends and weeks:
 - **Description**: Location where custody exchange takes place
 - **Format**: Free text
 - **Example**: `"Elementary School"`, `"Home"`
+
+#### 8. **Weekend Start Day** (`weekend_start_day`)
+- **Description**: Defines the start day for weekend custody.
+- **Values**: `"friday"` (default), `"saturday"`
+- **Usage**: Only for `alternate_weekend` and `alternate_week_parity`
+- **Effect**:
+  - `friday`: Weekend starts on Friday (arrival time)
+  - `saturday`: Weekend starts on Saturday (arrival time)
+
 
 ---
 

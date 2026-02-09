@@ -59,6 +59,22 @@ Vacances scolaires > Jours fériés > Garde classique
 
 ---
 
+## 🏠 Mode Garde Complète (Sans découpage)
+
+Si vous avez **désactivé la gestion de la garde** (via l'option "Activer la gestion de la garde") :
+
+- **Comportement** : L'intégration considère que vous avez la **garde complète** de l'enfant.
+- **Vacances** : Toutes les vacances scolaires sont affichées **en entier** (pas de découpage).
+- **Configuration** :
+  - `reference_year_vacations` (parité) est **ignoré** (vous avez les vacances chaque année).
+  - `vacation_split_mode` est **ignoré** (vous avez la totalité des vacances).
+- **Statut** : L'enfant est considéré "Présent" pendant toute la durée de toutes les vacances.
+
+> **Note** : Ce mode est idéal si vous êtes le gardien principal et ne partagez pas la garde, mais souhaitez suivre les dates des vacances scolaires.
+
+---
+
+
 ### Pays supportés et APIs
 
 L'application sélectionne automatiquement le fournisseur approprié selon le pays configuré :
@@ -123,31 +139,18 @@ Certaines dates peuvent être corrigées manuellement dans le code si l'API est 
   - **Belgique** : Communautés (`"FR"`, `"NL"`, `"DE"`)
   - **Québec** : `"QC"` (Général)
 
-#### 2. **Année de référence pour les vacances** (`reference_year_vacations`)
-- **Description** : Indique pour quelles **années (paires ou impaires)** vous avez des vacances scolaires
-- **Valeurs** : `"even"` (paire), `"odd"` (impaire)
-- **Configuration** : Dans le masque de saisie "Vacances scolaires" (séparé du `reference_year_custody` de la garde classique)
-- **Fonctionnement** : La **parité de l'année en cours** détermine si vous avez des vacances cette année
-  - `reference_year_vacations: "odd"` → vous avez des vacances **les années impaires**
-  - `reference_year_vacations: "even"` → vous avez des vacances **les années paires**
-- **Exemples** :
-  - Année 2025 (impaire) + `reference_year_vacations: "odd"` → Vous avez les vacances
-  - Année 2026 (paire) + `reference_year_vacations: "even"` → Vous avez les vacances
-- **Note** : 
-  - Cette logique s'applique à **toutes les vacances** (Noël, Hiver, Printemps, Toussaint)
-  - Pour l'été, utilisez `july_rule` et `august_rule` pour choisir indépendamment juillet ou août selon les années
-  - Le `reference_year_vacations` des vacances est **indépendant** du `reference_year_custody` de la garde classique
-
-#### 3. **Répartition des moitiés** (`vacation_split_mode`)
-- **Description** : Définit **quelle moitié** des vacances vous avez selon la parité de l'année
+#### 2. **Répartition des moitiés** (`vacation_split_mode`)
+- **Description** : Détermine quelle moitié des vacances vous avez selon la parité de l'année.
 - **Valeurs** :
-  - `"odd_first"` : **années impaires = 1ère moitié**, années paires = 2ème moitié (par défaut)
-  - `"odd_second"` : **années impaires = 2ème moitié**, années paires = 1ère moitié
+  - `"odd_first"` : **Années impaires** = 1ère moitié, **Années paires** = 2ème moitié (Défaut)
+  - `"odd_second"` : **Années impaires** = 2ème moitié, **Années paires** = 1ère moitié
+- **Fonctionnement** :
+  - Vous choisissez simplement quelle moitié vous avez les **années impaires** (ex: 2025).
+  - Le système attribue automatiquement l'autre moitié pour les années paires.
 - **Exemples** :
-  - Année 2025 (impaire) + `odd_first` → 1ère moitié
-  - Année 2026 (paire) + `odd_first` → 2ème moitié
-  - Année 2025 (impaire) + `odd_second` → 2ème moitié (inverse)
-  - Année 2026 (paire) + `odd_second` → 1ère moitié (inverse)
+  - `odd_first` en 2025 (impaire) → **1ère moitié**
+  - `odd_first` en 2026 (paire) → **2ème moitié**
+
 
 #### 4. **Niveau scolaire** (`school_level`)
 - **Description** : Niveau scolaire de l'enfant (affecte les horaires de sortie)
@@ -209,48 +212,44 @@ L'application utilise un **système automatique** basé sur :
 
 | Règle | Code | Description |
 |-------|------|-------------|
-| **Juillet - 1ère moitié** | `july_first_half` | 1er au 15 juillet<br>- `reference_year_vacations: "even"` : années impaires seulement<br>- `reference_year_vacations: "odd"` : années paires seulement |
-| **Juillet - 2ème moitié** | `july_second_half` | 16 au 31 juillet<br>- `reference_year_vacations: "even"` : années paires seulement<br>- `reference_year_vacations: "odd"` : années impaires seulement |
-| **Août - 1ère moitié** | `august_first_half` | 1er au 15 août<br>- `reference_year_vacations: "even"` : années impaires seulement<br>- `reference_year_vacations: "odd"` : années paires seulement |
-| **Août - 2ème moitié** | `august_second_half` | 16 au 31 août<br>- `reference_year_vacations: "even"` : années paires seulement<br>- `reference_year_vacations: "odd"` : années impaires seulement |
+| **Juillet - 1ère moitié** | `july_first_half` | 1er au 15 juillet<br>S'applique lorsque votre mode vous donne la **1ère Moitié** de l'été. |
+| **Juillet - 2ème moitié** | `july_second_half` | 16 au 31 juillet<br>S'applique lorsque votre mode vous donne la **2ème Moitié** de l'été. |
+| **Août - 1ère moitié** | `august_first_half` | 1er au 15 août<br>S'applique lorsque votre mode vous donne la **1ère Moitié** de l'été. |
+| **Août - 2ème moitié** | `august_second_half` | 16 au 31 août<br>S'applique lorsque votre mode vous donne la **2ème Moitié** de l'été. |
 
 > **Note** : 
-> - Les règles de quinzaines sont utilisées via le champ `summer_rule` et s'appliquent uniquement aux vacances d'été
-> - Elles utilisent `reference_year_vacations` pour déterminer automatiquement si elles s'appliquent selon la parité de l'année
+> - Les règles de quinzaines sont utilisées via le champ `summer_rule` et s'appliquent uniquement aux vacances d'été.
+> - Elles suivent automatiquement votre `vacation_split_mode` (1ère ou 2ème moitié).
 
 ---
 
 ## 📅 Règles de vacances détaillées
 
-### Système automatique basé sur `reference_year_vacations` + `vacation_split_mode`
+### Système automatique basé sur `vacation_split_mode`
 
-L'application détermine automatiquement :
-- **quelles années** vous avez des vacances (via `reference_year_vacations`)
-- **quelle moitié** vous avez cette année (via `vacation_split_mode`)
+L'application détermine automatiquement quelle moitié des vacances vous avez selon la **parité de l'année** et votre **Mode de Référence** (`vacation_split_mode`).
 
-#### 1. Années concernées (`reference_year_vacations`)
-- `reference_year_vacations: "odd"` → vous avez des vacances **les années impaires**
-- `reference_year_vacations: "even"` → vous avez des vacances **les années paires**
+#### 1. Mode de Référence (`vacation_split_mode`)
+Ce réglage définit votre planning de base pour les **Années Impaires** :
+- **`odd_first`** (Défaut) : Vous avez la **1ère Moitié** les années impaires (et automatiquement la 2ème Moitié les années paires).
+- **`odd_second`** : Vous avez la **2ème Moitié** les années impaires (et automatiquement la 1ère Moitié les années paires).
 
-#### 2. Répartition des moitiés (`vacation_split_mode`)
-- `odd_first` : années impaires = **1ère moitié**, années paires = **2ème moitié**
-- `odd_second` : années impaires = **2ème moitié**, années paires = **1ère moitié**
+#### 2. Logique de Parité
+- **Années Impaires** (ex: 2025, 2027) :
+  - `odd_first` → 1ère Moitié
+  - `odd_second` → 2ème Moitié
+- **Années Paires** (ex: 2024, 2026) :
+  - `odd_first` → 2ème Moitié (Inversé)
+  - `odd_second` → 1ère Moitié (Inversé)
 
-#### Exemple (mode par défaut)
+#### Exemple
 ```yaml
 zone: "C"
-reference_year_vacations: "odd"
-vacation_split_mode: "odd_first"
+vacation_split_mode: "odd_first"  # Années impaires = 1ère moitié
 school_level: "primary"
 ```
-
-#### Exemple (inverse)
-```yaml
-zone: "C"
-reference_year_vacations: "odd"
-vacation_split_mode: "odd_second"
-school_level: "primary"
-```
+- 2025 (Impaire) : **1ère Moitié**
+- 2026 (Paire) : **2ème Moitié**
 
 > **Note** : Le calcul du **milieu exact** reste identique (milieu = (début + fin) / 2).
 
@@ -494,7 +493,7 @@ L'application ajuste automatiquement les dates de l'API pour correspondre aux ho
 
 ### Calcul des dates
 
-Les dates sont calculées automatiquement selon la règle sélectionnée, la parité de l'année (`reference_year_vacations`) et la répartition des moitiés (`vacation_split_mode`).
+Les dates sont calculées automatiquement selon la règle sélectionnée, la parité de l'année et la répartition des moitiés (`vacation_split_mode`).
 
 ---
 
@@ -507,44 +506,26 @@ Les dates sont calculées automatiquement selon la règle sélectionnée, la par
 **Configuration Parent A** :
 ```yaml
 zone: "C"
-reference_year_vacations: "odd"  # 1ère partie (1ère moitié) en années impaires
-vacation_split_mode: "odd_first"
+vacation_split_mode: "odd_first"  # Années impaires = 1ère moitié
 school_level: "primary"
 ```
 
 **Configuration Parent B** :
 ```yaml
 zone: "C"
-reference_year_vacations: "even"  # 2ème partie (2ème moitié) en années paires
-vacation_split_mode: "odd_first"
+vacation_split_mode: "odd_second" # Années impaires = 2ème moitié
 school_level: "primary"
 ```
 
 **Résultat Parent A** (toutes vacances) :
 - **2025 (impaire)** : ✅ 1ère moitié de toutes les vacances
-  - Noël 2025 : 19/12/2025 16:15 → 27/12/2025 17:37:30
-  - Hiver 2025 : 1ère moitié
-  - Printemps 2025 : 1ère moitié
-  - Toussaint 2025 : 1ère moitié
-- **2026 (paire)** : ❌ Pas de garde (car c'est la 2ème partie, le parent B a la garde)
+- **2026 (paire)** : ✅ 2ème moitié de toutes les vacances
 
 **Résultat Parent B** (toutes vacances) :
-- **2025 (impaire)** : ❌ Pas de garde (car c'est la 1ère partie, le parent A a la garde)
-- **2026 (paire)** : ✅ 2ème moitié de toutes les vacances
-  - Noël 2026 : 27/12/2026 17:37:30 → 03/01/2027 19:00
-  - Hiver 2026 : 2ème moitié
-  - Printemps 2026 : 2ème moitié
-  - Toussaint 2026 : 2ème moitié
+- **2025 (impaire)** : ✅ 2ème moitié de toutes les vacances
+- **2026 (paire)** : ✅ 1ère moitié de toutes les vacances
 
-> **Note** : Cette logique s'applique à **toutes les vacances scolaires** (Noël, Hiver, Printemps, Toussaint, Été). Le champ `reference_year_vacations` détermine **les années concernées**, et `vacation_split_mode` détermine **la moitié**.
-
-**Variante inverse** (années impaires = 2ème moitié) :
-```yaml
-zone: "C"
-reference_year_vacations: "odd"
-vacation_split_mode: "odd_second"
-school_level: "primary"
-```
+> **Note** : Cette logique s'applique à **toutes les vacances scolaires**. `vacation_split_mode` détermine la moitié pour les années impaires, et l'inverse automatiquement pour les années paires.
 
 ---
 
@@ -555,7 +536,7 @@ school_level: "primary"
 **Configuration Parent A** :
 ```yaml
 zone: "C"
-reference_year_vacations: "even"  # Pour les autres vacances (Noël, Hiver, Printemps, Toussaint)
+vacation_split_mode: "odd_first"
 july_rule: "july_odd"  # Juillet en années impaires
 august_rule: "august_even"  # Août en années paires
 school_level: "primary"
@@ -564,7 +545,7 @@ school_level: "primary"
 **Configuration Parent B** :
 ```yaml
 zone: "C"
-reference_year_vacations: "odd"  # Pour les autres vacances (Noël, Hiver, Printemps, Toussaint)
+vacation_split_mode: "odd_second"
 july_rule: "july_even"  # Juillet en années paires
 august_rule: "august_odd"  # Août en années impaires
 school_level: "primary"
@@ -574,86 +555,45 @@ school_level: "primary"
 - 2024 (paire) : ✅ Août 2024 complet
 - 2025 (impaire) : ✅ Juillet 2025 complet
 - 2026 (paire) : ✅ Août 2026 complet
-- 2027 (impaire) : ✅ Juillet 2027 complet
 
 **Résultat Parent B** :
-- 2024 (paire) : ✅ Juillet 2024 complet (complémentaire du parent A)
-- 2025 (impaire) : ✅ Août 2025 complet (complémentaire du parent A)
-- 2026 (paire) : ✅ Juillet 2026 complet (complémentaire du parent A)
-- 2027 (impaire) : ✅ Août 2027 complet (complémentaire du parent A)
-
-> **Note** : Chaque parent configure indépendamment `july_rule` et `august_rule`. Cela permet une flexibilité totale : un parent peut avoir juillet en années impaires et août en années paires, ou toute autre combinaison. Les deux parents obtiennent des mois différents chaque année, garantissant une alternance équitable.
+- 2024 (paire) : ✅ Juillet 2024 complet
+- 2025 (impaire) : ✅ Août 2025 complet
+- 2026 (paire) : ✅ Juillet 2026 complet
 
 ---
 
-### Exemple 3 : Quinzaine de juillet avec `reference_year_vacations`
+### Exemple 3 : Partage Quinzaine Juillet
 
 **Situation** : Partage de la 1ère quinzaine de juillet selon la parité de l'année.
 
 **Configuration Parent A** :
 ```yaml
 zone: "C"
-reference_year_vacations: "even"  # Détermine quand la règle s'applique
-summer_rule: "july_first_half"  # 1ère moitié de juillet
+vacation_split_mode: "odd_first"   # Impaire = 1ère Moitié
+summer_rule: "july_first_half"     # Je veux la 1ère Moitié de Juillet
 school_level: "primary"
 ```
 
 **Configuration Parent B** :
 ```yaml
 zone: "C"
-reference_year_vacations: "odd"  # Détermine quand la règle s'applique
-summer_rule: "july_first_half"  # 1ère moitié de juillet
+vacation_split_mode: "odd_second"  # Impaire = 2ème Moitié
+summer_rule: "july_first_half"     # Je veux la 1ère Moitié de Juillet
 school_level: "primary"
 ```
 
-**Résultat Parent A** (`reference_year_vacations: "even"`) :
-- 2024 (paire) : ❌ Ne s'applique pas
-- 2025 (impaire) : ✅ 1-15 juillet 2025
-- 2026 (paire) : ❌ Ne s'applique pas
+**Résultat Parent A** (`odd_first`) :
+- 2024 (paire) : 2ème Moitié → Règle (1ère) **Ne Correspond Pas**
+- 2025 (impaire) : 1ère Moitié → Règle (1ère) **Correspond** → ✅ 1-15 Juillet 2025
 
-**Résultat Parent B** (`reference_year_vacations: "odd"`) :
-- 2024 (paire) : ✅ 1-15 juillet 2024 (complémentaire du parent A)
-- 2025 (impaire) : ❌ Ne s'applique pas (le parent A a la garde)
-- 2026 (paire) : ✅ 1-15 juillet 2026 (complémentaire du parent A)
+**Résultat Parent B** (`odd_second`) :
+- 2024 (paire) : 1ère Moitié → Règle (1ère) **Correspond** → ✅ 1-15 Juillet 2024
+- 2025 (impaire) : 2ème Moitié → Règle (1ère) **Ne Correspond Pas**
 
-> **Note** : Les deux parents utilisent la même règle `july_first_half`, mais avec des `reference_year_vacations` différents. En 2025 (année impaire), seul le parent A a la garde. En 2024 et 2026 (années paires), seul le parent B a la garde.
+> **Note** : Les deux parents demandent la "1ère Moitié de Juillet". Le système l'attribue au parent qui a *naturellement* la 1ère moitié cette année-là selon son `vacation_split_mode`.
 
 ---
-
-### Exemple 4 : Quinzaine d'août avec `reference_year_vacations`
-
-**Situation** : Partage de la 2ème quinzaine d'août selon la parité de l'année.
-
-**Configuration Parent A** :
-```yaml
-zone: "C"
-reference_year_vacations: "even"  # Détermine quand la règle s'applique
-summer_rule: "august_second_half"  # 2ème moitié d'août
-school_level: "primary"
-```
-
-**Configuration Parent B** :
-```yaml
-zone: "C"
-reference_year_vacations: "odd"  # Détermine quand la règle s'applique
-summer_rule: "august_second_half"  # 2ème moitié d'août
-school_level: "primary"
-```
-
-**Résultat Parent A** (`reference_year_vacations: "even"`) :
-- 2024 (paire) : ✅ 16-31 août 2024
-- 2025 (impaire) : ❌ Ne s'applique pas
-- 2026 (paire) : ✅ 16-31 août 2026
-
-**Résultat Parent B** (`reference_year_vacations: "odd"`) :
-- 2024 (paire) : ❌ Ne s'applique pas (le parent A a la garde)
-- 2025 (impaire) : ✅ 16-31 août 2025 (complémentaire du parent A)
-- 2026 (paire) : ❌ Ne s'applique pas (le parent A a la garde)
-
-> **Note** : Les deux parents utilisent la même règle `august_second_half`, mais avec des `reference_year_vacations` différents. En 2024 et 2026 (années paires), seul le parent A a la garde. En 2025 (année impaire), seul le parent B a la garde.
-
----
-
 
 ## 🔧 Dépannage
 
@@ -668,14 +608,13 @@ school_level: "primary"
 
 1. **Niveau scolaire** : Vérifiez que `school_level` est correct (primaire = vendredi 16:15)
 2. **Zone** : Vérifiez que la zone correspond à votre académie
-3. **Année** : Vérifiez que l'année de référence est correcte pour les règles basées sur la parité
+3. **Année** : Vérifiez que la parité est correcte pour les règles basées sur la parité
 
 ### Les règles ne s'appliquent pas correctement
 
-1. **reference_year_vacations** : Vérifiez que vous avez sélectionné les années concernées (paire / impaire)
-2. **vacation_split_mode** : Vérifiez si vous avez choisi la 1ère ou 2ème moitié pour les années impaires
-3. **july_rule / august_rule / summer_rule** : Vérifiez les règles d’été
-4. **Logs** : Consultez les logs pour voir les dates calculées
+1. **vacation_split_mode** : Vérifiez si vous avez choisi la 1ère ou 2ème moitié pour les années impaires
+2. **july_rule / august_rule / summer_rule** : Vérifiez les règles d’été
+3. **Logs** : Consultez les logs pour voir les dates calculées
 
 ---
 

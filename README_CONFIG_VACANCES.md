@@ -59,6 +59,22 @@ School holidays > Public holidays > Regular custody
 
 ---
 
+## 🏠 Full Custody Mode (No Splitting)
+
+If you have **disabled custody management** (via the "Enable custody management" option):
+
+- **Behavior**: The integration considers that you have **full custody** of the child.
+- **Vacations**: All school holidays are displayed **in full duration** (no splitting).
+- **Configuration**:
+  - `reference_year_vacations` (parity) is **ignored** (you have holidays every year).
+  - `vacation_split_mode` is **ignored** (you have the full holiday).
+- **Status**: The child is considered "Present" for the entire duration of all holidays.
+
+> **Note**: This mode is ideal if you are the primary custodian and do not share custody, but want to track school holiday dates.
+
+---
+
+
 ### Supported Countries and APIs
 
 The application automatically selects the appropriate provider based on the configured country:
@@ -123,31 +139,18 @@ Some dates may be manually corrected in the code if the API is incomplete or inc
   - **Belgium**: Communities (`"FR"`, `"NL"`, `"DE"`)
   - **Quebec**: `"QC"` (General)
 
-#### 2. **Reference Year for Holidays** (`reference_year_vacations`)
-- **Description**: Indicates for which **years (even or odd)** you have school holidays
-- **Values**: `"even"` (even), `"odd"` (odd)
-- **Configuration**: In the "School holidays" input form (separate from `reference_year_custody` for regular custody)
-- **How it works**: The **parity of the current year** determines if you have holidays this year
-  - `reference_year_vacations: "odd"` → you have holidays **on odd years**
-  - `reference_year_vacations: "even"` → you have holidays **on even years**
-- **Examples**:
-  - Year 2025 (odd) + `reference_year_vacations: "odd"` → You have holidays
-  - Year 2026 (even) + `reference_year_vacations: "even"` → You have holidays
-- **Note**: 
-  - This logic applies to **all holidays** (Christmas, Winter, Spring, All Saints' Day)
-  - For summer, use `july_rule` and `august_rule` to independently choose July or August based on years
-  - `reference_year_vacations` for holidays is **independent** of `reference_year_custody` for regular custody
-
-#### 3. **Half Distribution** (`vacation_split_mode`)
-- **Description**: Defines **which half** of holidays you have based on year parity
+#### 2. **Half Distribution** (`vacation_split_mode`)
+- **Description**: Determines which half of the holidays you have based on the year parity.
 - **Values**:
-  - `"odd_first"`: **odd years = 1st half**, even years = 2nd half (default)
-  - `"odd_second"`: **odd years = 2nd half**, even years = 1st half
+  - `"odd_first"`: **Odd years** = 1st half, **Even years** = 2nd half (Default)
+  - `"odd_second"`: **Odd years** = 2nd half, **Even years** = 1st half
+- **How it works**:
+  - You simply choose which half you have during **odd years** (e.g., 2025).
+  - The system automatically assigns the other half for even years.
 - **Examples**:
-  - Year 2025 (odd) + `odd_first` → 1st half
-  - Year 2026 (even) + `odd_first` → 2nd half
-  - Year 2025 (odd) + `odd_second` → 2nd half (inverse)
-  - Year 2026 (even) + `odd_second` → 1st half (inverse)
+  - `odd_first` in 2025 (odd) → **1st half**
+  - `odd_first` in 2026 (even) → **2nd half**
+
 
 #### 4. **School Level** (`school_level`)
 - **Description**: Child's school level (affects dismissal times)
@@ -209,48 +212,44 @@ The application uses an **automatic system** based on:
 
 | Rule | Code | Description |
 |------|------|-------------|
-| **July - 1st half** | `july_first_half` | July 1-15<br>- `reference_year_vacations: "even"`: odd years only<br>- `reference_year_vacations: "odd"`: even years only |
-| **July - 2nd half** | `july_second_half` | July 16-31<br>- `reference_year_vacations: "even"`: even years only<br>- `reference_year_vacations: "odd"`: odd years only |
-| **August - 1st half** | `august_first_half` | August 1-15<br>- `reference_year_vacations: "even"`: odd years only<br>- `reference_year_vacations: "odd"`: even years only |
-| **August - 2nd half** | `august_second_half` | August 16-31<br>- `reference_year_vacations: "even"`: even years only<br>- `reference_year_vacations: "odd"`: odd years only |
+| **July - 1st half** | `july_first_half` | July 1-15<br>Applies when your split mode gives you the **1st Half** of the summer. |
+| **July - 2nd half** | `july_second_half` | July 16-31<br>Applies when your split mode gives you the **2nd Half** of the summer. |
+| **August - 1st half** | `august_first_half` | August 1-15<br>Applies when your split mode gives you the **1st Half** of the summer. |
+| **August - 2nd half** | `august_second_half` | August 16-31<br>Applies when your split mode gives you the **2nd Half** of the summer. |
 
 > **Note**: 
-> - Fortnight rules are used via the `summer_rule` field and apply only to summer holidays
-> - They use `reference_year_vacations` to automatically determine if they apply based on year parity
+> - Fortnight rules are used via the `summer_rule` field and apply only to summer holidays.
+> - They automatically follow your `vacation_split_mode` (First vs. Second half).
 
 ---
 
 ## 📅 Detailed Holiday Rules
 
-### Automatic System Based on `reference_year_vacations` + `vacation_split_mode`
+### Automatic System Based on `vacation_split_mode`
 
-The application automatically determines:
-- **which years** you have holidays (via `reference_year_vacations`)
-- **which half** you have this year (via `vacation_split_mode`)
+The application automatically determines which half of the holidays you have based on the **year parity** and your **Reference Mode** (`vacation_split_mode`).
 
-#### 1. Years Concerned (`reference_year_vacations`)
-- `reference_year_vacations: "odd"` → you have holidays **on odd years**
-- `reference_year_vacations: "even"` → you have holidays **on even years**
+#### 1. Reference Mode (`vacation_split_mode`)
+This setting defines your "base" schedule for **Odd Years**:
+- **`odd_first`** (Default): You have the **1st Half** in odd years (and automatically the 2nd Half in even years).
+- **`odd_second`**: You have the **2nd Half** in odd years (and automatically the 1st Half in even years).
 
-#### 2. Half Distribution (`vacation_split_mode`)
-- `odd_first`: odd years = **1st half**, even years = **2nd half**
-- `odd_second`: odd years = **2nd half**, even years = **1st half**
+#### 2. Year Parity Logic
+- **Odd Years** (e.g., 2025, 2027):
+  - `odd_first` → 1st Half
+  - `odd_second` → 2nd Half
+- **Even Years** (e.g., 2024, 2026):
+  - `odd_first` → 2nd Half (Inverted)
+  - `odd_second` → 1st Half (Inverted)
 
-#### Example (Default Mode)
+#### Example
 ```yaml
 zone: "C"
-reference_year_vacations: "odd"
-vacation_split_mode: "odd_first"
+vacation_split_mode: "odd_first"  # Odd years = 1st half
 school_level: "primary"
 ```
-
-#### Example (Inverse)
-```yaml
-zone: "C"
-reference_year_vacations: "odd"
-vacation_split_mode: "odd_second"
-school_level: "primary"
-```
+- 2025 (Odd): **1st Half**
+- 2026 (Even): **2nd Half**
 
 > **Note**: The calculation of the **exact midpoint** remains identical (midpoint = (start + end) / 2).
 
@@ -494,164 +493,7 @@ The application automatically adjusts API dates to match custody times:
 
 ### Date Calculation
 
-Dates are automatically calculated based on the selected rule, year parity (`reference_year_vacations`), and half distribution (`vacation_split_mode`).
-
----
-
-## 📝 Configuration Examples
-
-### Example 1: Half Sharing (All Holidays)
-
-**Situation**: Fair sharing of all holidays (Christmas, Winter, Spring, All Saints' Day, Summer) by half based on year parity.
-
-**Parent A Configuration**:
-```yaml
-zone: "C"
-reference_year_vacations: "odd"  # 1st part (1st half) in odd years
-vacation_split_mode: "odd_first"
-school_level: "primary"
-```
-
-**Parent B Configuration**:
-```yaml
-zone: "C"
-reference_year_vacations: "even"  # 2nd part (2nd half) in even years
-vacation_split_mode: "odd_first"
-school_level: "primary"
-```
-
-**Parent A Result** (all holidays):
-- **2025 (odd)**: ✅ 1st half of all holidays
-  - Christmas 2025: 19/12/2025 16:15 → 27/12/2025 17:37:30
-  - Winter 2025: 1st half
-  - Spring 2025: 1st half
-  - All Saints' Day 2025: 1st half
-- **2026 (even)**: ❌ No custody (because it's the 2nd part, parent B has custody)
-
-**Parent B Result** (all holidays):
-- **2025 (odd)**: ❌ No custody (because it's the 1st part, parent A has custody)
-- **2026 (even)**: ✅ 2nd half of all holidays
-  - Christmas 2026: 27/12/2026 17:37:30 → 03/01/2027 19:00
-  - Winter 2026: 2nd half
-  - Spring 2026: 2nd half
-  - All Saints' Day 2026: 2nd half
-```
-
-> **Note**: This logic applies to **all school holidays** (Christmas, Winter, Spring, All Saints' Day, Summer). The `reference_year_vacations` field determines **the years concerned**, and `vacation_split_mode` determines **the half**.
-
-**Inverse Variant** (odd years = 2nd half):
-```yaml
-zone: "C"
-reference_year_vacations: "odd"
-vacation_split_mode: "odd_second"
-school_level: "primary"
-```
-
----
-
-### Example 2: July/August Sharing with Separate Rules
-
-**Situation**: Using `july_rule` and `august_rule` to fairly share July and August.
-
-**Parent A Configuration**:
-```yaml
-zone: "C"
-reference_year_vacations: "even"  # For other holidays (Christmas, Winter, Spring, All Saints' Day)
-july_rule: "july_odd"  # July in odd years
-august_rule: "august_even"  # August in even years
-school_level: "primary"
-```
-
-**Parent B Configuration**:
-```yaml
-zone: "C"
-reference_year_vacations: "odd"  # For other holidays (Christmas, Winter, Spring, All Saints' Day)
-july_rule: "july_even"  # July in even years
-august_rule: "august_odd"  # August in odd years
-school_level: "primary"
-```
-
-**Parent A Result**:
-- 2024 (even): ✅ Full August 2024
-- 2025 (odd): ✅ Full July 2025
-- 2026 (even): ✅ Full August 2026
-- 2027 (odd): ✅ Full July 2027
-
-**Parent B Result**:
-- 2024 (even): ✅ Full July 2024 (complementary to parent A)
-- 2025 (odd): ✅ Full August 2025 (complementary to parent A)
-- 2026 (even): ✅ Full July 2026 (complementary to parent A)
-- 2027 (odd): ✅ Full August 2027 (complementary to parent A)
-
-> **Note**: Each parent independently configures `july_rule` and `august_rule`. This allows complete flexibility: a parent can have July in odd years and August in even years, or any other combination. Both parents get different months each year, ensuring fair alternation.
-
----
-
-### Example 3: July Fortnight with `reference_year_vacations`
-
-**Situation**: Sharing the 1st fortnight of July based on year parity.
-
-**Parent A Configuration**:
-```yaml
-zone: "C"
-reference_year_vacations: "even"  # Determines when rule applies
-summer_rule: "july_first_half"  # 1st half of July
-school_level: "primary"
-```
-
-**Parent B Configuration**:
-```yaml
-zone: "C"
-reference_year_vacations: "odd"  # Determines when rule applies
-summer_rule: "july_first_half"  # 1st half of July
-school_level: "primary"
-```
-
-**Parent A Result** (`reference_year_vacations: "even"`):
-- 2024 (even): ❌ Does not apply
-- 2025 (odd): ✅ July 1-15, 2025
-- 2026 (even): ❌ Does not apply
-
-**Parent B Result** (`reference_year_vacations: "odd"`):
-- 2024 (even): ✅ July 1-15, 2024 (complementary to parent A)
-- 2025 (odd): ❌ Does not apply (parent A has custody)
-- 2026 (even): ✅ July 1-15, 2026 (complementary to parent A)
-
-> **Note**: Both parents use the same `july_first_half` rule, but with different `reference_year_vacations`. In 2025 (odd year), only parent A has custody. In 2024 and 2026 (even years), only parent B has custody.
-
----
-
-### Example 4: August Fortnight with `reference_year_vacations`
-
-**Situation**: Sharing the 2nd fortnight of August based on year parity.
-
-**Parent A Configuration**:
-```yaml
-zone: "C"
-reference_year_vacations: "even"  # Determines when rule applies
-summer_rule: "august_second_half"  # 2nd half of August
-school_level: "primary"
-```
-
-**Parent B Configuration**:
-```yaml
-zone: "C"
-reference_year_vacations: "odd"  # Determines when rule applies
-summer_rule: "august_second_half"  # 2nd half of August
-school_level: "primary"
-```
-
-**Parent A Result** (`reference_year_vacations: "even"`):
-- 2024 (even): ✅ August 16-31, 2024
-- 2025 (odd): ❌ Does not apply
-- 2026 (even): ✅ August 16-31, 2026
-
-**Parent B Result** (`reference_year_vacations: "odd"`):
-- 2024 (even): ❌ Does not apply (parent A has custody)
-- 2025 (odd): ✅ August 16-31, 2025 (complementary to parent A)
-- 2026 (even): ❌ Does not apply (parent A has custody)
-
-> **Note**: Both parents use the same `august_second_half` rule, but with different `reference_year_vacations`. In 2024 and 2026 (even years), only parent A has custody. In 2025 (odd year), only parent B has custody.
+Dates are automatically calculated based on the selected rule, year parity, and half distribution (`vacation_split_mode`).
 
 ---
 
@@ -668,14 +510,14 @@ school_level: "primary"
 
 1. **School level**: Verify that `school_level` is correct (primary = Friday 16:15)
 2. **Zone**: Verify that the zone matches your academy
-3. **Year**: Verify that the reference year is correct for parity-based rules
+3. **Year**: Verify that the parity is correct for parity-based rules
 
 ### Rules Don't Apply Correctly
 
-1. **reference_year_vacations**: Verify that you selected the concerned years (even / odd)
-2. **vacation_split_mode**: Verify if you chose the 1st or 2nd half for odd years
-3. **july_rule / august_rule / summer_rule**: Check summer rules
-4. **Logs**: Check logs to see calculated dates
+1. **vacation_split_mode**: Verify if you chose the 1st or 2nd half for odd years
+2. **july_rule / august_rule / summer_rule**: Check summer rules
+3. **Logs**: Check logs to see calculated dates
+
 
 ---
 

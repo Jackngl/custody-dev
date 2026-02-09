@@ -23,7 +23,7 @@ L'intégration **Custody** crée automatiquement plusieurs entités pour chaque 
 - **1 Binary Sensor** : Statut de présence
 - **1 Calendar** : Calendrier complet
 - **1 Device Tracker** : Suivi de présence (utilisable dans l'entité Personne)
-- **7 Sensors** : Informations détaillées sur la garde et les vacances
+- **9 Capteurs** : Informations détaillées sur la garde et les vacances
 
 Toutes les entités sont préfixées par le **slug du prénom de l’enfant** : minuscules, espaces remplacés par des underscores (ex. « Sarah-Léa » → `sarah_lea`). Remplacez `{enfant}` dans les exemples par ce slug.
 
@@ -55,6 +55,15 @@ Indique si l'enfant est actuellement en garde (garde classique ou vacances scola
 - `next_vacation_end` : Fin des prochaines vacances (ISO format)
 - `days_until_vacation` : Jours jusqu'aux prochaines vacances
 - `school_holidays_raw` : Liste complète des vacances scolaires
+
+#### 🏠 Comportement en Mode Garde Complète
+Si la **gestion de la garde est désactivée** :
+- `custody_type` : Devient `None`.
+- `next_arrival` : Devient `None` (forcé).
+- `next_departure` : Devient `None` (forcé).
+- `vacation_name` : Affiche la période de vacances complète sans découpage.
+- **Sensors** : Les capteurs correspondants afficheront `unknown` ou `None`.
+
 
 #### Utilisation
 - **Dashboard** : Afficher un indicateur visuel de présence
@@ -254,6 +263,36 @@ Nombre de jours restants avant le début des prochaines vacances scolaires.
 #### Utilisation
 - **Dashboard** : Afficher un compteur de jours avant les vacances
 - **Automation** : Déclencher des actions avant les vacances
+
+
+### 11. Capteur : Prochain changement
+
+**Nom de l'entité** : `sensor.{enfant}_next_change`  
+**Nom d'affichage** : `{Enfant} Prochain changement`
+
+#### Description
+Capteur combiné résumant le prochain événement (arrivée ou départ).
+
+#### Format
+- **État** : Texte (ex : "16:15" si aujourd'hui, ou "Vendredi 21/02")
+- **Icône** : `mdi:calendar-sync`
+
+---
+
+### 12. Capteur : Lieu de garde
+
+**Nom de l'entité** : `sensor.{enfant}_parent_in_charge`  
+**Nom d'affichage** : `{Enfant} Lieu de garde`
+
+#### Description
+État explicite indiquant chez qui se trouve l'enfant.
+
+#### États
+- **`home`** : Chez moi (Présent)
+- **`away`** : Chez l'autre parent (Absent)
+
+#### Icône
+Dynamique : `mdi:home-account` si présent, `mdi:account-arrow-right` si absent.
 
 ---
 
@@ -584,8 +623,10 @@ Toutes les entités partagent des attributs communs accessibles via `{{ state_at
 | Sensor | `sensor.{enfant}_days_remaining` | {Enfant} Jours restants | Jours avant changement |
 | Sensor | `sensor.{enfant}_current_period` | {Enfant} Période actuelle | `school` / `vacation` |
 | Sensor | `sensor.{enfant}_next_vacation_name` | {Enfant} Prochaines vacances | Nom des vacances |
-| Sensor | `sensor.{enfant}_next_vacation_start` | {Enfant} Date des prochaines vacances | Date de début |
+| Sensor | `sensor.{enfant}_next_vacation_start` | {Enfant} Début des vacances | Date de début |
 | Sensor | `sensor.{enfant}_days_until_vacation` | {Enfant} Jours jusqu'aux vacances | Jours avant vacances |
+| Sensor | `sensor.{enfant}_next_change` | {Enfant} Prochain changement | Résumé prochain événement |
+| Sensor | `sensor.{enfant}_parent_in_charge` | {Enfant} Lieu de garde | home / away |
 
 ---
 

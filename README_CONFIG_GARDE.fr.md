@@ -23,6 +23,27 @@ Ce guide explique comment configurer la **garde classique** (weekends et semaine
 
 ---
 
+## 🎛️ Activer la gestion de la garde
+
+L'option **"Activer la gestion de la garde alternée"** (interrupteur) permet de choisir entre deux modes :
+
+### 1. **Activé (Garde Alternée)** - Par défaut
+- **Comportement** : L'enfant alterne entre les parents selon le planning configuré.
+- **Statut** : Change entre "Présent" (chez vous) et "Absent" (chez l'autre parent).
+- **Capteurs** : `next_arrival` et `next_departure` indiquent les prochains échanges.
+- **Vacances** : Découpées en moitiés (ou règles personnalisées) pour être partagées.
+
+### 2. **Désactivé (Garde Complète)**
+- **Comportement** : L'enfant est considéré comme vivant principalement chez vous.
+- **Statut** : Toujours **"Présent"** (sauf si forcé manuellement à "Absent").
+- **Capteurs** : `next_arrival` et `next_departure` sont désactivés (pas d'échanges).
+- **Vacances** : Les **vacances entières** sont affichées (pas de découpage), car l'enfant est avec vous pour toute la durée.
+
+> **Note** : Ce réglage est accessible lors de la configuration initiale et dans le menu "Fonctionnalités" des Options.
+
+---
+
+
 ## 🔀 Séparation garde classique / vacances scolaires
 
 L'application sépare clairement **deux systèmes de garde indépendants** :
@@ -124,6 +145,15 @@ L'application supporte **6 types de garde** pour les weekends et semaines :
 - **Description** : Lieu où se fait l'échange de garde
 - **Format** : Texte libre
 - **Exemple** : `"École élémentaire"`, `"Domicile"`
+
+#### 8. **Jour de début de week-end** (`weekend_start_day`)
+- **Description** : Définit le jour de début pour la garde de week-end.
+- **Valeurs** : `"friday"` (vendredi, par défaut), `"saturday"` (samedi)
+- **Usage** : Uniquement pour `alternate_weekend` et `alternate_week_parity`
+- **Effet** :
+  - `friday` : Le week-end commence le vendredi (heure d'arrivée)
+  - `saturday` : Le week-end commence le samedi (heure d'arrivée)
+
 
 ---
 
