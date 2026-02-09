@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 
 import aiohttp
@@ -177,7 +177,7 @@ class OpenHolidaysProvider(BaseHolidayProvider):
                         # Ensure we use midnight for bounds
                         start = dt_util.as_local(datetime.combine(start_naive.date(), datetime.min.time()))
                         end = dt_util.as_local(datetime.combine(end_naive.date(), datetime.max.time()))
-                        
+
                         holidays.append(
                             SchoolHoliday(
                                 name=name,
