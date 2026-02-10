@@ -1192,15 +1192,26 @@ class CustodyScheduleManager:
             while effective_end_date.weekday() != target_end_weekday:
                 effective_end_date += timedelta(days=1)
 
-        effective_start = datetime.combine(effective_start_date, self._arrival_time, start_dt.tzinfo)
-        effective_end = datetime.combine(effective_end_date, self._departure_time, end_dt.tzinfo)
+        effective_start = datetime.combine(effective_start_date, self._arrival_time, self._tz)
+        effective_end = datetime.combine(effective_end_date, self._departure_time, self._tz)
 
         # Safety fallback: avoid inverted windows on unexpected API shapes
         if effective_end <= effective_start:
             effective_start = self._apply_time(start_dt, self._arrival_time)
             effective_end = self._apply_time(end_dt, self._departure_time)
 
-        midpoint = effective_start + (effective_end - effective_start) / 2
+        # Calculate midpoint duration in days
+        delta = effective_end - effective_start
+        half_days = round(delta.total_seconds() / 86400 / 2)
+
+        # Midpoint is the middle day at arrival_time (cleaner for users)
+        midpoint_date = effective_start.date() + timedelta(days=half_days)
+        midpoint = datetime.combine(midpoint_date, self._arrival_time, self._tz)
+
+        # Ensure midpoint is actually between start and end
+        if not (effective_start < midpoint < effective_end):
+            midpoint = effective_start + delta / 2
+
         return effective_start, effective_end, midpoint
 
     def _parse_time(self, value: str) -> time:

@@ -25,7 +25,6 @@ HOLIDAY_API = (
     "?dataset=fr-en-calendrier-scolaire"
     "&refine.annee_scolaire={year}"
     "&refine.zones={zone}"
-    "&refine.population=%C3%89l%C3%A8ves"
     "&rows=100"
 )
 

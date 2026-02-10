@@ -273,19 +273,17 @@ class SchoolHolidayClient:
                 deduped.append(h)
 
         # 2. Sort by start date (ascending) and duration (descending)
-        # This ensures the most complete holiday is processed first
+        # This ensures the most complete holiday is processed first for any given day
         deduped.sort(key=lambda h: (h.start, -(h.end - h.start).total_seconds()))
 
-        # 3. Filter out shorter overlapping duplicates (keep only the most complete one)
-        # We avoid "merging" (union) as requested, and instead select the master record.
+        # 3. Filter out duplicates for the SAME holiday (starting on the same day)
         unique_holidays = []
         if deduped:
             current = deduped[0]
             for next_h in deduped[1:]:
-                # If they overlap significantly, they are likely the same holiday
-                # Since we sorted by duration descending, 'current' is the best version
-                if next_h.start < current.end:
-                    # Overlap detected. Skip next_h as it's a shorter or partial duplicate.
+                # If they start on the same day, they are likely duplicates/variants
+                # We already have the longest version in 'current' due to sorting
+                if next_h.start.date() == current.start.date():
                     continue
                 else:
                     unique_holidays.append(current)
