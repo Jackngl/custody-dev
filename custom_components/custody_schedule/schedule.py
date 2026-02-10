@@ -264,6 +264,17 @@ class CustodyScheduleManager:
         windows.extend(self._build_recurring_windows(now_local))
         windows.sort(key=lambda window: window.start)
 
+        # Final deduplication (by start, end, and label)
+        final_unique = []
+        seen_windows = set()
+        for w in windows:
+            k = (w.start, w.end, w.label)
+            if k not in seen_windows:
+                seen_windows.add(k)
+                final_unique.append(w)
+
+        windows = final_unique
+
         # Conserver toutes les fenêtres pour l'affichage (historique)
         all_windows = list(windows)
 

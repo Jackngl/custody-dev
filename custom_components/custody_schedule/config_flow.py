@@ -1246,14 +1246,18 @@ class CustodyScheduleOptionsFlow(config_entries.OptionsFlow):
             new_sync = cleaned.get(CONF_CALENDAR_SYNC, False)
             old_target = self._entry.options.get(CONF_CALENDAR_TARGET, self._entry.data.get(CONF_CALENDAR_TARGET))
             new_target = cleaned.get(CONF_CALENDAR_TARGET)
-            
+
             if old_sync and (not new_sync or (new_target and old_target != new_target)):
                 from .const import LOGGER
+
                 if not new_sync:
                     LOGGER.info("Calendar sync disabled in options, triggering cleanup for %s", self._entry.entry_id)
                 else:
-                    LOGGER.info("Calendar target changed in options, triggering cleanup for old target of %s", self._entry.entry_id)
-                
+                    LOGGER.info(
+                        "Calendar target changed in options, triggering cleanup for old target of %s",
+                        self._entry.entry_id,
+                    )
+
                 self.hass.async_create_task(
                     self.hass.services.async_call(
                         DOMAIN,

@@ -260,13 +260,13 @@ class SchoolHolidayClient:
 
         holidays = await provider.get_holidays(country, zone, year)
 
-        # Deduplicate
-        seen = set()
+        # Deduplicate by start and end dates (ignore name variants)
+        seen_dates = set()
         unique = []
         for h in holidays:
-            k = (h.name, h.start, h.end)
-            if k not in seen:
-                seen.add(k)
+            k = (h.start, h.end)
+            if k not in seen_dates:
+                seen_dates.add(k)
                 unique.append(h)
 
         self._cache[cache_key] = unique
