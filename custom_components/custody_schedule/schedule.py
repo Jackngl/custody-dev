@@ -1192,25 +1192,24 @@ class CustodyScheduleManager:
             while effective_end_date.weekday() != target_end_weekday:
                 effective_end_date += timedelta(days=1)
 
-        effective_start = datetime.combine(effective_start_date, self._arrival_time, self._tz)
-        effective_end = datetime.combine(effective_end_date, self._departure_time, self._tz)
+        # Use as_local to ensure cleaner timezone handling without pytz LMT shifts
+        effective_start = dt_util.as_local(datetime.combine(effective_start_date, self._arrival_time))
+        effective_end = dt_util.as_local(datetime.combine(effective_end_date, self._departure_time))
 
         # Safety fallback: avoid inverted windows on unexpected API shapes
         if effective_end <= effective_start:
-            effective_start = self._apply_time(start_dt, self._arrival_time)
-            effective_end = self._apply_time(end_dt, self._departure_time)
+            effective_start = dt_util.as_local(datetime.combine(start_dt.date(), self._arrival_time))
+            effective_end = dt_util.as_local(datetime.combine(end_dt.date(), self._departure_time))
 
-        # Calculate midpoint duration in days
+        # Calculate exact mathematical midpoint
         delta = effective_end - effective_start
-        half_days = round(delta.total_seconds() / 86400 / 2)
-
-        # Midpoint is the middle day at arrival_time (cleaner for users)
-        midpoint_date = effective_start.date() + timedelta(days=half_days)
-        midpoint = datetime.combine(midpoint_date, self._arrival_time, self._tz)
-
-        # Ensure midpoint is actually between start and end
-        if not (effective_start < midpoint < effective_end):
-            midpoint = effective_start + delta / 2
+        exact_midpoint = effective_start + delta / 2
+        
+        # Round midpoint to the nearest 30 minutes for a "clean" but accurate transition
+        # This resolves the 01:31 or 13:31 issues while keeping the duration fair
+        seconds = exact_midpoint.timestamp()
+        rounded_seconds = round(seconds / 1800) * 1800
+        midpoint = dt_util.as_local(datetime.fromtimestamp(rounded_seconds))
 
         return effective_start, effective_end, midpoint
 
