@@ -1204,7 +1204,7 @@ class CustodyScheduleManager:
         # Calculate exact mathematical midpoint
         delta = effective_end - effective_start
         exact_midpoint = effective_start + delta / 2
-        
+
         # Round midpoint to the nearest 30 minutes for a "clean" but accurate transition
         # This resolves the 01:31 or 13:31 issues while keeping the duration fair
         seconds = exact_midpoint.timestamp()
