@@ -56,6 +56,7 @@ from .const import (
     FRENCH_ZONES_WITH_CITIES,
     HOLIDAY_API,
     REFERENCE_YEARS,
+    SERVICE_PURGE_CALENDAR,
     SUBDIVISIONS,
     VACATION_SPLIT_MODES,
 )
@@ -1240,6 +1241,27 @@ class CustodyScheduleOptionsFlow(config_entries.OptionsFlow):
                     data_schema=self._get_advanced_schema(merged_data),
                     errors=errors,
                 )
+            # Trigger purge if calendar sync is being disabled or target changed
+            old_sync = self._entry.options.get(CONF_CALENDAR_SYNC, self._entry.data.get(CONF_CALENDAR_SYNC, False))
+            new_sync = cleaned.get(CONF_CALENDAR_SYNC, False)
+            old_target = self._entry.options.get(CONF_CALENDAR_TARGET, self._entry.data.get(CONF_CALENDAR_TARGET))
+            new_target = cleaned.get(CONF_CALENDAR_TARGET)
+            
+            if old_sync and (not new_sync or (new_target and old_target != new_target)):
+                from .const import LOGGER
+                if not new_sync:
+                    LOGGER.info("Calendar sync disabled in options, triggering cleanup for %s", self._entry.entry_id)
+                else:
+                    LOGGER.info("Calendar target changed in options, triggering cleanup for old target of %s", self._entry.entry_id)
+                
+                self.hass.async_create_task(
+                    self.hass.services.async_call(
+                        DOMAIN,
+                        SERVICE_PURGE_CALENDAR,
+                        {"entry_id": self._entry.entry_id},
+                    )
+                )
+
             self._data.update(cleaned)
             return self.async_create_entry(title="", data=self._data)
 

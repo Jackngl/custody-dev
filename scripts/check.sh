@@ -9,7 +9,9 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 # Determine the python binary to use
-if [ -d ".venv" ]; then
+if [ -n "$VENV_PYTHON" ]; then
+  echo "ℹ️  Using provided python: $VENV_PYTHON"
+elif [ -d ".venv" ]; then
   VENV_PYTHON="./.venv/bin/python3"
   echo "ℹ️  Using virtual environment: $VENV_PYTHON"
 else
@@ -18,8 +20,12 @@ else
 fi
 
 # Inject mock Home Assistant for local tests if real one is not available
-export PYTHONPATH="$PYTHONPATH:$(pwd)/tests/mock_ha"
-echo "ℹ️  PYTHONPATH updated to include local mocks."
+if ! $VENV_PYTHON -c "import homeassistant" &>/dev/null; then
+  export PYTHONPATH="$PYTHONPATH:$(pwd)/tests/mock_ha"
+  echo "ℹ️  PYTHONPATH updated to include local mocks (homeassistant not found)."
+else
+  echo "ℹ️  Home Assistant already installed, skipping local mocks."
+fi
 
 echo "--- 🧼 Formatting (Black & Isort) ---"
 # --force-exclude ensures these are skipped even if black finds them

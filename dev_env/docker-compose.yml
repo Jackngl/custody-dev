@@ -1,0 +1,14 @@
+services:
+  tests:
+    build:
+      context: ..
+      dockerfile: dev_env/Dockerfile
+    volumes:
+      - ..:/app
+      # Hide host files that cause permission or environment issues
+      - /app/.venv
+      - /app/.pytest_cache
+      - /app/brain
+    environment:
+      - VENV_PYTHON=python3
+    command: [ "./scripts/check.sh" ]
