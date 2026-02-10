@@ -260,17 +260,40 @@ class SchoolHolidayClient:
 
         holidays = await provider.get_holidays(country, zone, year)
 
-        # Deduplicate by start and end dates (ignore name variants)
-        seen_dates = set()
-        unique = []
-        for h in holidays:
-            k = (h.start, h.end)
-            if k not in seen_dates:
-                seen_dates.add(k)
-                unique.append(h)
+        if not holidays:
+            return []
 
-        self._cache[cache_key] = unique
-        return unique
+        # 1. Deduplicate by name and exact dates
+        seen = set()
+        deduped = []
+        for h in holidays:
+            k = (h.name, h.start, h.end)
+            if k not in seen:
+                seen.add(k)
+                deduped.append(h)
+
+        # 2. Sort by start date (ascending) and duration (descending)
+        # This ensures the most complete holiday is processed first
+        deduped.sort(key=lambda h: (h.start, -(h.end - h.start).total_seconds()))
+
+        # 3. Filter out shorter overlapping duplicates (keep only the most complete one)
+        # We avoid "merging" (union) as requested, and instead select the master record.
+        unique_holidays = []
+        if deduped:
+            current = deduped[0]
+            for next_h in deduped[1:]:
+                # If they overlap significantly, they are likely the same holiday
+                # Since we sorted by duration descending, 'current' is the best version
+                if next_h.start < current.end:
+                    # Overlap detected. Skip next_h as it's a shorter or partial duplicate.
+                    continue
+                else:
+                    unique_holidays.append(current)
+                    current = next_h
+            unique_holidays.append(current)
+
+        self._cache[cache_key] = unique_holidays
+        return unique_holidays
 
     async def async_test_connection(self, country: str, zone: str, year: int | None = None) -> dict[str, Any]:
         """Test API connection."""
