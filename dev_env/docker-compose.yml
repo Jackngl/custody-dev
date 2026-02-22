@@ -11,4 +11,4 @@ services:
       - /app/brain
     environment:
       - VENV_PYTHON=python3
-    command: [ "./scripts/check.sh" ]
+    command: ["./scripts/check.sh"]
