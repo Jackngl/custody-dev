@@ -600,21 +600,7 @@ class CustodyScheduleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if calendar_sync and not str(calendar_target).strip():
                 errors[CONF_CALENDAR_TARGET] = "calendar_target_required"
 
-            # Validate API URL if provided
-            api_url = cleaned.get(CONF_HOLIDAY_API_URL)
-            if api_url and api_url.strip():
-                # Basic validation: must contain {year} and {zone} placeholders
-                if "{year}" not in api_url or "{zone}" not in api_url:
-                    # Merge user input with existing data to preserve user's entry
-                    merged_data = {**self._data, **cleaned}
-                    return self.async_show_form(
-                        step_id="advanced",
-                        data_schema=self._get_advanced_schema(merged_data),
-                        errors={**errors, CONF_HOLIDAY_API_URL: "api_url_missing_placeholders"},
-                    )
-                cleaned[CONF_HOLIDAY_API_URL] = api_url.strip()
-            else:
-                cleaned.pop(CONF_HOLIDAY_API_URL, None)
+            # Holiday API URL and Sync Days are no longer configurable via UI, removed their validation.
             if errors:
                 merged_data = {**self._data, **cleaned}
                 return self.async_show_form(
@@ -1217,22 +1203,7 @@ class CustodyScheduleOptionsFlow(config_entries.OptionsFlow):
             if calendar_sync and not str(calendar_target).strip():
                 errors[CONF_CALENDAR_TARGET] = "calendar_target_required"
 
-            # Validate API URL if provided
-            api_url = cleaned.get(CONF_HOLIDAY_API_URL)
-            if api_url and api_url.strip():
-                # Basic validation: must contain {year} and {zone} placeholders
-                if "{year}" not in api_url or "{zone}" not in api_url:
-                    # Merge user input with existing data to preserve user's entry
-                    data = {**self._entry.data, **(self._entry.options or {})}
-                    merged_data = {**data, **cleaned}
-                    return self.async_show_form(
-                        step_id="advanced",
-                        data_schema=self._get_advanced_schema(merged_data),
-                        errors={**errors, CONF_HOLIDAY_API_URL: "api_url_missing_placeholders"},
-                    )
-                cleaned[CONF_HOLIDAY_API_URL] = api_url.strip()
-            else:
-                cleaned.pop(CONF_HOLIDAY_API_URL, None)
+            # Holiday API URL and Sync Days are no longer configurable via UI, removed their validation.
             if errors:
                 data = {**self._entry.data, **(self._entry.options or {})}
                 merged_data = {**data, **cleaned}
@@ -1286,29 +1257,10 @@ class CustodyScheduleOptionsFlow(config_entries.OptionsFlow):
                     default=data.get(CONF_CALENDAR_TARGET) if data.get(CONF_CALENDAR_TARGET) else vol.UNDEFINED,
                 ): selector.EntitySelector(selector.EntitySelectorConfig(domain="calendar")),
                 vol.Optional(
-                    CONF_CALENDAR_SYNC_DAYS,
-                    default=data.get(CONF_CALENDAR_SYNC_DAYS, 120),
-                ): selector.SelectSelector(
-                    selector.SelectSelectorConfig(
-                        options=[
-                            {"value": "90", "label": "3 mois (90 jours)"},
-                            {"value": "180", "label": "6 mois (180 jours)"},
-                            {"value": "365", "label": "1 an (365 jours)"},
-                            {"value": "730", "label": "2 ans (730 jours)"},
-                        ],
-                        mode=selector.SelectSelectorMode.DROPDOWN,
-                    )
-                ),
-                vol.Optional(
                     CONF_CALENDAR_SYNC_INTERVAL_HOURS,
                     default=data.get(CONF_CALENDAR_SYNC_INTERVAL_HOURS, 1),
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(min=1, max=24, mode=selector.NumberSelectorMode.BOX, step=1)
                 ),
-                vol.Optional(
-                    CONF_HOLIDAY_API_URL,
-                    default=data.get(CONF_HOLIDAY_API_URL, ""),
-                    description={"suggested_value": HOLIDAY_API},
-                ): cv.string,
             }
         )

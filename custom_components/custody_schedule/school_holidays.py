@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 import aiohttp
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import aiohttp_client
+from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
 from .const import HOLIDAY_API, LOGGER
@@ -232,22 +233,100 @@ class CanadaHolidayProvider(BaseHolidayProvider):
         return sorted(all_holidays, key=lambda h: h.start)
 
 
+STORAGE_VERSION = 1
+STORAGE_KEY = "custody_schedule_holidays"
+
+
 class SchoolHolidayClient:
     """Client that delegates to specific country providers."""
 
     def __init__(self, hass: HomeAssistant, api_url: str | None = None) -> None:
         self._hass = hass
         self._session = aiohttp_client.async_get_clientsession(hass)
-        self._cache: dict[tuple[str, str, str, int | None], list[SchoolHoliday]] = {}
+        self._store = Store(hass, STORAGE_VERSION, STORAGE_KEY)
+        self._cache_loaded = False
+        self._cache: dict[tuple[str, str, str, int | None], dict[str, Any]] = {}
         self._france_provider = FranceEducationProvider(hass, self._session)
         self._open_provider = OpenHolidaysProvider(hass, self._session)
         self._canada_provider = CanadaHolidayProvider(hass, self._session)
 
+    async def _async_load_cache(self) -> None:
+        if self._cache_loaded:
+            return
+        try:
+            data = await self._store.async_load()
+            if data:
+                for key_str, entry in data.items():
+                    parts = key_str.split("|")
+                    if len(parts) >= 3:
+                        country, zone, year_str = parts[0], parts[1], parts[2]
+                        year = int(year_str) if year_str != "None" else None
+                        key = (country, zone, str(year), year)
+
+                        # Support for both old format (list) and new format (dict with timestamp)
+                        if isinstance(entry, list):
+                            holidays_data = entry
+                            # Force refresh by simulating an old fetch (60 days ago)
+                            timestamp = (dt_util.now() - timedelta(days=60)).isoformat()
+                        else:
+                            holidays_data = entry.get("holidays", [])
+                            timestamp = entry.get("timestamp", (dt_util.now() - timedelta(days=60)).isoformat())
+
+                        holidays = []
+                        for h in holidays_data:
+                            start_dt = dt_util.parse_datetime(h.get("start", ""))
+                            end_dt = dt_util.parse_datetime(h.get("end", ""))
+                            if start_dt and end_dt:
+                                holidays.append(
+                                    SchoolHoliday(
+                                        name=h.get("name", "Vacances"),
+                                        zone=h.get("zone", ""),
+                                        start=start_dt,
+                                        end=end_dt,
+                                    )
+                                )
+                        if holidays:
+                            self._cache[key] = {"timestamp": timestamp, "holidays": holidays}
+        except Exception as err:
+            LOGGER.warning("Error loading holiday cache: %s", err)
+
+        self._cache_loaded = True
+
+    async def _async_save_cache(self) -> None:
+        try:
+            data = {}
+            for key, cache_entry in self._cache.items():
+                key_str = f"{key[0]}|{key[1]}|{key[2]}"
+                data[key_str] = {
+                    "timestamp": cache_entry["timestamp"],
+                    "holidays": [
+                        {
+                            "name": h.name,
+                            "zone": h.zone,
+                            "start": h.start.isoformat(),
+                            "end": h.end.isoformat(),
+                        }
+                        for h in cache_entry["holidays"]
+                    ],
+                }
+            await self._store.async_save(data)
+        except Exception as err:
+            LOGGER.warning("Error saving holiday cache: %s", err)
+
     async def async_list(self, country: str, zone: str, year: int | None = None) -> list[SchoolHoliday]:
         """Return holidays using the appropriate provider."""
+        await self._async_load_cache()
+
         cache_key = (country, zone, str(year), year)
+        now = dt_util.now()
+
+        # Try to use fresh cache (< 30 days old)
         if cache_key in self._cache:
-            return self._cache[cache_key]
+            cache_entry = self._cache[cache_key]
+            # Parse timestamp safely
+            cache_time = dt_util.parse_datetime(cache_entry["timestamp"])
+            if cache_time and (now - cache_time).days < 30:
+                return cache_entry["holidays"]
 
         if country == "FR":
             provider = self._france_provider
@@ -258,9 +337,19 @@ class SchoolHolidayClient:
         else:
             provider = self._france_provider
 
-        holidays = await provider.get_holidays(country, zone, year)
+        try:
+            holidays = await provider.get_holidays(country, zone, year)
+        except Exception as err:
+            LOGGER.error("Holiday provider error for %s %s: %s", country, zone, err)
+            holidays = []
 
         if not holidays:
+            # Fallback to expired cache if available ("anti-flood" / "fallback" mode)
+            if cache_key in self._cache:
+                LOGGER.warning(
+                    "Using expired fallback cache for %s %s due to API failure or empty response", country, zone
+                )
+                return self._cache[cache_key]["holidays"]
             return []
 
         # 1. Deduplicate by name and exact dates
@@ -290,7 +379,8 @@ class SchoolHolidayClient:
                     current = next_h
             unique_holidays.append(current)
 
-        self._cache[cache_key] = unique_holidays
+        self._cache[cache_key] = {"timestamp": now.isoformat(), "holidays": unique_holidays}
+        self._hass.async_create_task(self._async_save_cache())
         return unique_holidays
 
     async def async_test_connection(self, country: str, zone: str, year: int | None = None) -> dict[str, Any]:
@@ -310,3 +400,4 @@ class SchoolHolidayClient:
     def clear(self) -> None:
         """Clear cache."""
         self._cache.clear()
+        self._hass.async_create_task(self._async_save_cache())

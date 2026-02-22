@@ -589,41 +589,38 @@ class CustodyScheduleManager:
     def _filter_windows_by_vacations(
         self, pattern_windows: list[CustodyWindow], vacation_windows: list[CustodyWindow]
     ) -> list[CustodyWindow]:
-        """Remove or truncate pattern windows that overlap with vacation periods.
-
-        Vacations (and special days like Mother's Day) have priority over normal pattern rules.
-        Instead of removing the entire window on overlap, we subtract the overlapping part.
-        """
+        """Remove or truncate pattern windows that overlap with vacation periods."""
         if not vacation_windows:
             return pattern_windows
 
         # Build a list of priority periods (start, end) for quick overlap checking.
         vacation_periods = [(vw.start, vw.end) for vw in vacation_windows if vw.source == "vacation_filter"]
         if not vacation_periods:
-            # Fallback to display windows if no filter windows (should not happen for vacations)
             vacation_periods = [(vw.start, vw.end) for vw in vacation_windows]
 
-        # Process each priority period one by one, subtracting from the set of pattern windows
-        current_active_windows = list(pattern_windows)
+        # Sort vacation periods by start date to allow early exit (CPU optimization)
+        vacation_periods.sort(key=lambda x: x[0])
 
-        for vac_start, vac_end in vacation_periods:
-            next_pass_windows = []
-            for item in current_active_windows:
-                # 1. No overlap at all? Keep the window as is.
-                if item.start >= vac_end or item.end <= vac_start:
-                    next_pass_windows.append(item)
-                    continue
+        current_active_windows = []
+        for item in pattern_windows:
+            fragments = [item]
+            for vac_start, vac_end in vacation_periods:
+                # CPU Optimization: vacations are sorted. If the original item ends before this vacation,
+                # it will end before all subsequent vacations. We can break early.
+                if item.end <= vac_start:
+                    break
 
-                # 2. Partials overlaps - Subtract the overlapping range
-                # Handle the part before the vacation segment
-                if item.start < vac_start:
-                    next_pass_windows.append(CustodyWindow(item.start, vac_start, item.label, item.source))
-
-                # Handle the part after the vacation segment
-                if item.end > vac_end:
-                    next_pass_windows.append(CustodyWindow(vac_end, item.end, item.label, item.source))
-
-            current_active_windows = next_pass_windows
+                next_fragments = []
+                for frag in fragments:
+                    if vac_end <= frag.start or vac_start >= frag.end:
+                        next_fragments.append(frag)
+                    else:
+                        if frag.start < vac_start:
+                            next_fragments.append(CustodyWindow(frag.start, vac_start, frag.label, frag.source))
+                        if frag.end > vac_end:
+                            next_fragments.append(CustodyWindow(vac_end, frag.end, frag.label, frag.source))
+                fragments = next_fragments
+            current_active_windows.extend(fragments)
 
         return current_active_windows
 
@@ -663,11 +660,8 @@ class CustodyScheduleManager:
         custody_type = self._config.get(CONF_CUSTODY_TYPE, "alternate_week")
         type_def = CUSTODY_TYPES.get(custody_type) or CUSTODY_TYPES["alternate_week"]
         # Use a longer horizon based on calendar sync settings
-        try:
-            sync_days = int(self._config.get(CONF_CALENDAR_SYNC_DAYS, 120))
-        except (TypeError, ValueError):
-            sync_days = 120
-        horizon = now + timedelta(days=max(400, sync_days + 30))
+        # Calcul par défaut fixé à 12 mois (365 jours)
+        horizon = now + timedelta(days=365)
 
         # Cas particulier : week-ends basés sur la parité ISO des semaines
         if custody_type == "alternate_weekend":
