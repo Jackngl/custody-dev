@@ -11,12 +11,15 @@ NC='\033[0m' # No Color
 # Determine the python binary to use
 if [ -n "$VENV_PYTHON" ]; then
   echo "ℹ️  Using provided python: $VENV_PYTHON"
-elif [ -d ".venv" ]; then
+elif [ -f ".venv/bin/python3" ] && [ -x ".venv/bin/python3" ]; then
   VENV_PYTHON="./.venv/bin/python3"
   echo "ℹ️  Using virtual environment: $VENV_PYTHON"
+elif [ -f ".venv_dev/bin/python3" ] && [ -x ".venv_dev/bin/python3" ]; then
+  VENV_PYTHON="./.venv_dev/bin/python3"
+  echo "ℹ️  Using dev virtual environment: $VENV_PYTHON"
 else
   VENV_PYTHON="python3"
-  echo "⚠️  Warning: No .venv found, using system python."
+  echo "⚠️  Warning: No executable .venv found, using system python."
 fi
 
 # Inject mock Home Assistant for local tests if real one is not available
