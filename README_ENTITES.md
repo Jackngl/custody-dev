@@ -385,6 +385,9 @@ tap_action:
   navigation_path: /lovelace/planning
 ```
 
+💡 For a dedicated **"Custody Schedule"** dashboard view (single-child + multi-child with color coding per child), use:
+**[README_DASHBOARD_GARDE.md](README_DASHBOARD_GARDE.md)**.
+
 ---
 
 ## 🤖 Automation Examples

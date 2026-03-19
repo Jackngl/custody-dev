@@ -385,6 +385,9 @@ tap_action:
   navigation_path: /lovelace/planning
 ```
 
+💡 Pour une vue dédiée **"Calendrier de garde"** (single-child + multi-enfants avec couleurs par enfant), utilisez le guide :
+**[README_DASHBOARD_GARDE.fr.md](README_DASHBOARD_GARDE.fr.md)**.
+
 ---
 
 ## 🤖 Exemples d'automations
