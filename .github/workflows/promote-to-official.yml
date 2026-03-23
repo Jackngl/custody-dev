@@ -39,7 +39,7 @@ jobs:
           # Remove checkout's default GitHub auth header to ensure official remote
           # uses the PAT embedded in AUTHED_URL instead of GITHUB_TOKEN.
           git config --local --unset-all http.https://github.com/.extraheader || true
-          AUTHED_URL="https://x-access-token:${{ secrets.OFFICIAL_REPO_TOKEN }}@github.com/Jackngl/custody.git"
+          AUTHED_URL="https://Jackngl:${{ secrets.OFFICIAL_REPO_TOKEN }}@github.com/Jackngl/custody.git"
           if git remote get-url official >/dev/null 2>&1; then
             git remote set-url official "$AUTHED_URL"
           else
