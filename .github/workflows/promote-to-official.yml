@@ -17,6 +17,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          fetch-tags: true
           persist-credentials: false
 
       - name: Configure Git
@@ -95,12 +96,19 @@ jobs:
               echo "::warning::Failed to push release tag $TAG_NAME"
             fi
           else
-            # Fallback for manual dispatch: push all tags but ignore existing ones errors
-            echo "Pushing all tags..."
-            if git push official --tags; then
-              echo "✓ Successfully pushed all tags"
+            # Manual dispatch: push only the tag that matches manifest version.
+            # Avoids `git push --tags` failing when older local tags diverge from official.
+            VERSION=$(jq -r '.version' custom_components/custody_schedule/manifest.json)
+            TAG="v${VERSION}"
+            echo "Pushing tag from manifest: $TAG"
+            if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+              if git push official "$TAG"; then
+                echo "✓ Successfully pushed tag $TAG"
+              else
+                echo "::warning::Failed to push tag $TAG (may already exist on official with same commit)"
+              fi
             else
-              echo "::warning::Some tags failed to push (probably already exist)"
+              echo "::notice::No local tag $TAG — branch was promoted; create the tag on custody-dev or publish a Release to push it."
             fi
           fi
 
